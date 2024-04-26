@@ -21,3 +21,5 @@ cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo/", package =
 cairo-lang-starknet-classes = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet-classes", branch = "main" }
 cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-defs", branch = "main" }
 cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet", branch = "main"}
+cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-to-casm", branch = "main"}
+
