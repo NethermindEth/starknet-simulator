@@ -1808,6 +1808,7 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "clap",
+ "indexmap 1.9.3",
  "itertools 0.10.5",
  "serde",
  "serde_json",

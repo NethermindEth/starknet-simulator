@@ -11,6 +11,7 @@ itertools = "0.10.1"
 serde = { version = "1.0.192", default-features = false, features = ["derive"] }
 serde_json = "1.0"
 clap = { version = "4.4", features = ["derive"] }
+   indexmap = "1.7.0"
 cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-compiler", branch = "main" }
 cairo-lang-project = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-project", branch = "main" }
 cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-filesystem", branch = "main" }

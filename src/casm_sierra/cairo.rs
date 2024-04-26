@@ -3,10 +3,10 @@ use cairo_lang_casm::assembler::InstructionRepr;
 use cairo_lang_sierra::ProgramParser;
 use cairo_lang_sierra_to_casm::compiler::{compile, SierraToCasmConfig};
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::fs;
 
-pub type CasmSierraMapping = HashMap<u64, Vec<u64>>;
+pub type CasmSierraMapping = IndexMap<u64, Vec<u64>>;
 #[derive(Debug)]
 pub struct CasmInstruction {
     memory: String,
@@ -65,7 +65,7 @@ fn compile_sierra_to_casm(
     let debug_info = cairo_program.debug_info;
     let sierra_statement_info = debug_info.sierra_statement_info;
 
-    let mut casm_sierra_mapping = HashMap::new();
+    let mut casm_sierra_mapping = IndexMap::new();
     let mut sierra_statement_index = 0;
     for sierra_statement_debug_info in sierra_statement_info.iter() {
         let casm_instruction_index = sierra_statement_debug_info.instruction_idx;
