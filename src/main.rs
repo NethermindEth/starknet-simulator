@@ -1,4 +1,4 @@
-pub mod cairo_integration;
+pub mod cairo_sierra;
 
 fn main() {
     println!("Hello, world!");

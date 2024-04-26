@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::cairo_integration::cairo_helper::{compile_cairo_project_at_path, CompilerConfig};
+use crate::cairo_sierra::cairo_helper::{compile_cairo_project_at_path, CompilerConfig};
 
 pub fn compile_cairo() {
     let project_config_path = Path::new("<REPLACE WITH CAIRO PROJECT PATH>");
