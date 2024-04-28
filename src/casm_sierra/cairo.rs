@@ -8,19 +8,18 @@ use indexmap::IndexMap;
 use std::fs;
 
 pub type CasmSierraMapping = IndexMap<u64, Vec<u64>>;
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CasmInstruction {
     memory: String,
     instruction_index: usize,
     instruction_representation: Option<InstructionRepr>,
 }
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct CasmSierraMappingInstruction {
     casm_instructions: Vec<CasmInstruction>,
     casm_sierra_mapping: CasmSierraMapping,
 }
 
-#[derive(Debug)]
 pub struct SierraCompile {
     casm_sierra_mapping_instruction: CasmSierraMappingInstruction,
     casm: String,
@@ -41,7 +40,7 @@ fn compile_sierra_to_casm(sierra_program: String) -> Result<SierraCompile, anyho
         },
     )
     .with_context(|| "Compilation failed.")?;
-
+    println!("cairo_program: {}", cairo_program);
     if let Ok(casm_sierra_mapping_instruction) =
         get_casm_sierra_mapping_instructions(cairo_program.clone())
     {
@@ -108,10 +107,12 @@ mod tests {
 
     #[test]
     fn test_compile_sierra_to_casm() {
-        let sierra_program = fs::read_to_string("/fib.sierra").expect("Could not read file!");
+        let sierra_program =
+            fs::read_to_string("/Users/jelilat/nethermind/hello_cairo/src/fib.sierra")
+                .expect("Could not read file!");
 
         let casm_sierra_mapping =
             compile_sierra_to_casm(sierra_program).expect("Compilation failed");
-        println!("{:?}", casm_sierra_mapping);
+        // println!("{:?}", casm_sierra_mapping);
     }
 }

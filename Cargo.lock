@@ -1793,6 +1793,7 @@ name = "starknet-simulator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "cairo-felt",
  "cairo-lang-casm",
  "cairo-lang-compiler",
  "cairo-lang-defs",
@@ -1808,10 +1809,18 @@ dependencies = [
  "cairo-lang-syntax",
  "cairo-lang-utils",
  "clap",
+ "convert_case",
  "indexmap 1.9.3",
  "itertools 0.10.5",
+ "num-bigint",
+ "num-integer",
+ "num-traits 0.2.18",
+ "once_cell",
  "serde",
  "serde_json",
+ "smol_str",
+ "starknet-crypto",
+ "thiserror",
 ]
 
 [[package]]
