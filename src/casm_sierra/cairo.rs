@@ -1,8 +1,9 @@
 use anyhow::Context;
 use cairo_lang_casm::assembler::InstructionRepr;
 use cairo_lang_sierra::ProgramParser;
-use cairo_lang_sierra_to_casm::compiler::{compile, SierraToCasmConfig};
+use cairo_lang_sierra_to_casm::compiler::{compile, CairoProgram, SierraToCasmConfig};
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
+
 use indexmap::IndexMap;
 use std::fs;
 
@@ -19,9 +20,13 @@ pub struct CasmSierraMappingInstruction {
     casm_sierra_mapping: CasmSierraMapping,
 }
 
-fn compile_sierra_to_casm(
-    sierra_program: String,
-) -> Result<CasmSierraMappingInstruction, anyhow::Error> {
+#[derive(Debug)]
+pub struct SierraCompile {
+    casm_sierra_mapping_instruction: CasmSierraMappingInstruction,
+    casm: String,
+}
+
+fn compile_sierra_to_casm(sierra_program: String) -> Result<SierraCompile, anyhow::Error> {
     let program = ProgramParser::new()
         .parse(&sierra_program)
         .map_err(|_| anyhow::anyhow!("Failed to parse sierra program"))?;
@@ -37,6 +42,21 @@ fn compile_sierra_to_casm(
     )
     .with_context(|| "Compilation failed.")?;
 
+    if let Ok(casm_sierra_mapping_instruction) =
+        get_casm_sierra_mapping_instructions(cairo_program.clone())
+    {
+        Ok(SierraCompile {
+            casm_sierra_mapping_instruction,
+            casm: cairo_program.to_string(),
+        })
+    } else {
+        Err(anyhow::anyhow!("Failed to compile sierra to casm"))
+    }
+}
+
+pub fn get_casm_sierra_mapping_instructions(
+    cairo_program: CairoProgram,
+) -> Result<CasmSierraMappingInstruction, anyhow::Error> {
     let instructions = cairo_program.instructions;
     let mut casm_instructions = Vec::new();
     for (index, instruction) in instructions.iter().enumerate() {
