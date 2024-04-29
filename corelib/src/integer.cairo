@@ -2476,7 +2476,7 @@ impl U8Zero of core::num::traits::Zero<u8> {
     }
     #[inline(always)]
     fn is_zero(self: @u8) -> bool {
-        *self == U8Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @u8) -> bool {
@@ -2490,7 +2490,7 @@ impl U16Zero of core::num::traits::Zero<u16> {
     }
     #[inline(always)]
     fn is_zero(self: @u16) -> bool {
-        *self == U16Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @u16) -> bool {
@@ -2504,7 +2504,7 @@ impl U32Zero of core::num::traits::Zero<u32> {
     }
     #[inline(always)]
     fn is_zero(self: @u32) -> bool {
-        *self == U32Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @u32) -> bool {
@@ -2518,7 +2518,7 @@ impl U64Zero of core::num::traits::Zero<u64> {
     }
     #[inline(always)]
     fn is_zero(self: @u64) -> bool {
-        *self == U64Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @u64) -> bool {
@@ -2532,7 +2532,7 @@ impl U128Zero of core::num::traits::Zero<u128> {
     }
     #[inline(always)]
     fn is_zero(self: @u128) -> bool {
-        *self == U128Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @u128) -> bool {
@@ -2546,7 +2546,7 @@ impl U256Zero of core::num::traits::Zero<u256> {
     }
     #[inline(always)]
     fn is_zero(self: @u256) -> bool {
-        *self == U256Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @u256) -> bool {
@@ -2560,7 +2560,7 @@ impl I8Zero of core::num::traits::Zero<i8> {
     }
     #[inline(always)]
     fn is_zero(self: @i8) -> bool {
-        *self == I8Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @i8) -> bool {
@@ -2574,7 +2574,7 @@ impl I16Zero of core::num::traits::Zero<i16> {
     }
     #[inline(always)]
     fn is_zero(self: @i16) -> bool {
-        *self == I16Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @i16) -> bool {
@@ -2588,7 +2588,7 @@ impl I32Zero of core::num::traits::Zero<i32> {
     }
     #[inline(always)]
     fn is_zero(self: @i32) -> bool {
-        *self == I32Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @i32) -> bool {
@@ -2602,7 +2602,7 @@ impl I64Zero of core::num::traits::Zero<i64> {
     }
     #[inline(always)]
     fn is_zero(self: @i64) -> bool {
-        *self == I64Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @i64) -> bool {
@@ -2616,7 +2616,7 @@ impl I128Zero of core::num::traits::Zero<i128> {
     }
     #[inline(always)]
     fn is_zero(self: @i128) -> bool {
-        *self == I128Zero::zero()
+        *self == Self::zero()
     }
     #[inline(always)]
     fn is_non_zero(self: @i128) -> bool {
@@ -2632,7 +2632,7 @@ impl U8One of core::num::traits::One<u8> {
     }
     #[inline(always)]
     fn is_one(self: @u8) -> bool {
-        *self == U8One::one()
+        *self == Self::one()
     }
     #[inline(always)]
     fn is_non_one(self: @u8) -> bool {
@@ -2646,7 +2646,7 @@ impl U16One of core::num::traits::One<u16> {
     }
     #[inline(always)]
     fn is_one(self: @u16) -> bool {
-        *self == U16One::one()
+        *self == Self::one()
     }
     #[inline(always)]
     fn is_non_one(self: @u16) -> bool {
@@ -2660,7 +2660,7 @@ impl U32One of core::num::traits::One<u32> {
     }
     #[inline(always)]
     fn is_one(self: @u32) -> bool {
-        *self == U32One::one()
+        *self == Self::one()
     }
     #[inline(always)]
     fn is_non_one(self: @u32) -> bool {
@@ -2674,7 +2674,7 @@ impl U64One of core::num::traits::One<u64> {
     }
     #[inline(always)]
     fn is_one(self: @u64) -> bool {
-        *self == U64One::one()
+        *self == Self::one()
     }
     #[inline(always)]
     fn is_non_one(self: @u64) -> bool {
@@ -2688,7 +2688,7 @@ impl U128One of core::num::traits::One<u128> {
     }
     #[inline(always)]
     fn is_one(self: @u128) -> bool {
-        *self == U128One::one()
+        *self == Self::one()
     }
     #[inline(always)]
     fn is_non_one(self: @u128) -> bool {
@@ -2702,7 +2702,7 @@ impl U256One of core::num::traits::One<u256> {
     }
     #[inline(always)]
     fn is_one(self: @u256) -> bool {
-        *self == U256One::one()
+        *self == Self::one()
     }
     #[inline(always)]
     fn is_non_one(self: @u256) -> bool {
@@ -2717,7 +2717,7 @@ impl I8One of core::num::traits::One<i8> {
 
     #[inline(always)]
     fn is_one(self: @i8) -> bool {
-        *self == I8One::one()
+        *self == Self::one()
     }
 
     #[inline(always)]
@@ -2733,7 +2733,7 @@ impl I16One of core::num::traits::One<i16> {
 
     #[inline(always)]
     fn is_one(self: @i16) -> bool {
-        *self == I16One::one()
+        *self == Self::one()
     }
 
     #[inline(always)]
@@ -2749,7 +2749,7 @@ impl I32One of core::num::traits::One<i32> {
 
     #[inline(always)]
     fn is_one(self: @i32) -> bool {
-        *self == I32One::one()
+        *self == Self::one()
     }
 
     #[inline(always)]
@@ -2765,7 +2765,7 @@ impl I64One of core::num::traits::One<i64> {
 
     #[inline(always)]
     fn is_one(self: @i64) -> bool {
-        *self == I64One::one()
+        *self == Self::one()
     }
 
     #[inline(always)]
@@ -2781,7 +2781,7 @@ impl I128One of core::num::traits::One<i128> {
 
     #[inline(always)]
     fn is_one(self: @i128) -> bool {
-        *self == I128One::one()
+        *self == Self::one()
     }
 
     #[inline(always)]
@@ -3076,6 +3076,100 @@ impl U32WrappingMul = core::num::traits::ops::wrapping::overflow_based::TWrappin
 impl U64WrappingMul = core::num::traits::ops::wrapping::overflow_based::TWrappingMul<u64>;
 impl U128WrappingMul = core::num::traits::ops::wrapping::overflow_based::TWrappingMul<u128>;
 impl U256WrappingMul = core::num::traits::ops::wrapping::overflow_based::TWrappingMul<u256>;
+
+// CheckedAdd implementations
+impl U8CheckedAdd of core::num::traits::CheckedAdd<u8> {
+    fn checked_add(self: u8, v: u8) -> Option<u8> {
+        u8_checked_add(self, v)
+    }
+}
+
+impl U16CheckedAdd of core::num::traits::CheckedAdd<u16> {
+    fn checked_add(self: u16, v: u16) -> Option<u16> {
+        u16_checked_add(self, v)
+    }
+}
+
+impl U32CheckedAdd of core::num::traits::CheckedAdd<u32> {
+    fn checked_add(self: u32, v: u32) -> Option<u32> {
+        u32_checked_add(self, v)
+    }
+}
+
+impl U64CheckedAdd of core::num::traits::CheckedAdd<u64> {
+    fn checked_add(self: u64, v: u64) -> Option<u64> {
+        u64_checked_add(self, v)
+    }
+}
+
+impl U128CheckedAdd of core::num::traits::CheckedAdd<u128> {
+    fn checked_add(self: u128, v: u128) -> Option<u128> {
+        u128_checked_add(self, v)
+    }
+}
+
+impl U256CheckedAdd of core::num::traits::CheckedAdd<u256> {
+    fn checked_add(self: u256, v: u256) -> Option<u256> {
+        u256_checked_add(self, v)
+    }
+}
+
+impl I8CheckedAdd = core::num::traits::ops::checked::overflow_based::TCheckedAdd<i8>;
+impl I16CheckedAdd = core::num::traits::ops::checked::overflow_based::TCheckedAdd<i16>;
+impl I32CheckedAdd = core::num::traits::ops::checked::overflow_based::TCheckedAdd<i32>;
+impl I64CheckedAdd = core::num::traits::ops::checked::overflow_based::TCheckedAdd<i64>;
+impl I128CheckedAdd = core::num::traits::ops::checked::overflow_based::TCheckedAdd<i128>;
+
+// CheckedSub implementations
+impl U8CheckedSub of core::num::traits::CheckedSub<u8> {
+    fn checked_sub(self: u8, v: u8) -> Option<u8> {
+        u8_checked_sub(self, v)
+    }
+}
+
+impl U16CheckedSub of core::num::traits::CheckedSub<u16> {
+    fn checked_sub(self: u16, v: u16) -> Option<u16> {
+        u16_checked_sub(self, v)
+    }
+}
+
+impl U32CheckedSub of core::num::traits::CheckedSub<u32> {
+    fn checked_sub(self: u32, v: u32) -> Option<u32> {
+        u32_checked_sub(self, v)
+    }
+}
+
+impl U64CheckedSub of core::num::traits::CheckedSub<u64> {
+    fn checked_sub(self: u64, v: u64) -> Option<u64> {
+        u64_checked_sub(self, v)
+    }
+}
+
+impl U128CheckedSub of core::num::traits::CheckedSub<u128> {
+    fn checked_sub(self: u128, v: u128) -> Option<u128> {
+        u128_checked_sub(self, v)
+    }
+}
+
+impl U256CheckedSub of core::num::traits::CheckedSub<u256> {
+    fn checked_sub(self: u256, v: u256) -> Option<u256> {
+        u256_checked_sub(self, v)
+    }
+}
+
+impl I8CheckedSub = core::num::traits::ops::checked::overflow_based::TCheckedSub<i8>;
+impl I16CheckedSub = core::num::traits::ops::checked::overflow_based::TCheckedSub<i16>;
+impl I32CheckedSub = core::num::traits::ops::checked::overflow_based::TCheckedSub<i32>;
+impl I64CheckedSub = core::num::traits::ops::checked::overflow_based::TCheckedSub<i64>;
+impl I128CheckedSub = core::num::traits::ops::checked::overflow_based::TCheckedSub<i128>;
+
+// CheckedMul implementations
+impl U8CheckedMul = core::num::traits::ops::checked::overflow_based::TCheckedMul<u8>;
+impl U16CheckedMul = core::num::traits::ops::checked::overflow_based::TCheckedMul<u16>;
+impl U32CheckedMul = core::num::traits::ops::checked::overflow_based::TCheckedMul<u32>;
+impl U64CheckedMul = core::num::traits::ops::checked::overflow_based::TCheckedMul<u64>;
+impl U128CheckedMul = core::num::traits::ops::checked::overflow_based::TCheckedMul<u128>;
+impl U256CheckedMul = core::num::traits::ops::checked::overflow_based::TCheckedMul<u256>;
 
 /// Internal trait for easier finding of absolute values.
 pub(crate) trait AbsAndSign<Signed, Unsigned> {
