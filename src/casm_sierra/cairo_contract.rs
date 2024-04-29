@@ -28,7 +28,8 @@ fn conpile_contract_sierra_to_casm() -> anyhow::Result<()> {
         entry_points_by_type,
         _abi,
     } = serde_json::from_str(
-        &fs::read_to_string("Storage.json").with_context(|| "Failed to read file.")?,
+        &fs::read_to_string("/Users/jelilat/nethermind/hello_cairo/src/Storage.json")
+            .with_context(|| "Failed to read file.")?,
     )
     .with_context(|| "Deserialization failed.")?;
     let contract_class = ContractClass {
@@ -42,7 +43,7 @@ fn conpile_contract_sierra_to_casm() -> anyhow::Result<()> {
     let casm_contract = CasmContractClass::from_contract_class(contract_class, false, 180000)
         .with_context(|| "Compilation failed.")?;
 
-    println!("{:?}", casm_contract.casm_sierra_mapping_instruction);
+    println!("{:?}", casm_contract);
     let res = serde_json::to_string_pretty(&casm_contract.casm_contract_class)
         .with_context(|| "Casm contract Serialization failed.")?;
 

@@ -2,12 +2,13 @@
 //!
 //! This crate is responsible for compiling a Cairo project into a Sierra program.
 //! It is the main entry point for the compiler.
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::path::Path;
 use std::sync::Arc;
 
 use ::cairo_lang_diagnostics::ToOption;
 use anyhow::{Context, Result};
+use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::DiagnosticLocation;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateId;
@@ -17,6 +18,7 @@ use cairo_lang_sierra::program::{Program, ProgramArtifact, StatementIdx};
 use cairo_lang_sierra_generator::db::SierraGenGroup;
 use cairo_lang_sierra_generator::program_generator::SierraProgramWithDebug;
 use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
+use cairo_lang_sierra_generator::statements_locations::StatementsLocations;
 use cairo_lang_utils::unordered_hash_map::UnorderedHashMap;
 
 use cairo_lang_compiler::db::RootDatabase;
@@ -42,16 +44,16 @@ pub struct CompilerConfig<'c> {
 
 #[derive(Debug)]
 pub struct CairoLocation {
-    file_name: String,
-    start: TextPosition,
-    end: TextPosition,
+    pub file_name: String,
+    pub start: TextPosition,
+    pub end: TextPosition,
 }
 #[derive(Debug)]
 pub struct CairoInfo {
-    fn_name: String,
-    cairo_locations: Vec<CairoLocation>,
+    pub fn_name: String,
+    pub cairo_locations: Vec<CairoLocation>,
 }
-pub type SierraCairoInfoMapping = HashMap<u32, CairoInfo>;
+pub type SierraCairoInfoMapping = IndexMap<u32, CairoInfo>;
 
 pub struct FullProgram {
     pub program: Program,
@@ -116,30 +118,11 @@ pub fn compile_prepared_db_program(
 ) -> Result<FullProgram> {
     match compile_prepared_db(db, main_crate_ids, compiler_config) {
         Ok(sierra_program_with_debug) => {
-            let statements_functions_map = sierra_program_with_debug
-                .debug_info
-                .statements_locations
-                .get_statements_functions_map_for_tests(db);
+            let statement_locations = sierra_program_with_debug.debug_info.statements_locations;
+            let statements_functions_map =
+                statement_locations.get_statements_functions_map_for_tests(db);
 
-            let diagnostic_locations = sierra_program_with_debug
-                .debug_info
-                .statements_locations
-                .locations
-                .iter_sorted()
-                .flat_map(|(statement_idx, locations)| {
-                    locations
-                        .iter()
-                        .map(|location| (*statement_idx, location.diagnostic_location(db)))
-                })
-                .fold(
-                    HashMap::new(),
-                    |mut acc, (statement_idx, diagnostic_location)| {
-                        acc.entry(statement_idx)
-                            .or_insert_with(Vec::new)
-                            .push(diagnostic_location);
-                        acc
-                    },
-                );
+            let diagnostic_locations = get_diagnostic_locations(db, statement_locations);
 
             let sierra_cairo_info_mapping = generate_sierra_to_cairo_statement_info(
                 db,
@@ -157,13 +140,45 @@ pub fn compile_prepared_db_program(
     }
 }
 
-fn generate_sierra_to_cairo_statement_info(
+pub fn get_diagnostic_locations(
+    db: &dyn DefsGroup,
+    statement_locations: StatementsLocations,
+) -> IndexMap<StatementIdx, Vec<DiagnosticLocation>> {
+    statement_locations
+        .locations
+        .iter_sorted()
+        .flat_map(|(statement_idx, locations)| {
+            locations
+                .iter()
+                .map(|location| (*statement_idx, location.diagnostic_location(db)))
+        })
+        .fold(
+            IndexMap::new(),
+            |mut acc, (statement_idx, diagnostic_location)| {
+                acc.entry(statement_idx)
+                    .or_insert_with(Vec::new)
+                    .push(diagnostic_location);
+                acc
+            },
+        )
+}
+
+// Generates mapping information between Sierra and Cairo statements
+//
+// # Arguments
+// * `db` - Preloaded compilation database.
+// * `no_of_statements` - The number of statements in the program.
+// * `statements_functions_map` - The map of statement to function name.
+// * `diagnostic_locations` - The map of statement to diagnostic location.
+// # Returns
+// * `SierraCairoInfoMapping` - The map of statement to Cairo info.
+pub fn generate_sierra_to_cairo_statement_info(
     db: &dyn FilesGroup,
     no_of_statements: usize,
     statements_functions_map: UnorderedHashMap<StatementIdx, String>,
-    diagnostic_locations: HashMap<StatementIdx, Vec<DiagnosticLocation>>,
+    diagnostic_locations: IndexMap<StatementIdx, Vec<DiagnosticLocation>>,
 ) -> SierraCairoInfoMapping {
-    let mut sierra_cairo_info_mapping: SierraCairoInfoMapping = HashMap::new();
+    let mut sierra_cairo_info_mapping: SierraCairoInfoMapping = IndexMap::new();
 
     for idx in 0..no_of_statements {
         let statement_idx = StatementIdx(idx);
