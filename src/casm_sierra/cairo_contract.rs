@@ -1,6 +1,6 @@
 use std::fs;
 
-use crate::casm_sierra::cairo_contract_helper::CasmContractClass;
+use crate::casm_sierra::cairo_contract_helper::{CasmContractClass, SierraContractCompile};
 use anyhow::Context;
 use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
 use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoints};
@@ -19,7 +19,7 @@ pub struct ContractClassIgnoreAbi {
     pub _abi: Option<serde_json::Value>,
 }
 
-fn conpile_contract_sierra_to_casm() -> anyhow::Result<()> {
+fn conpile_contract_sierra_to_casm(file_path: String) -> anyhow::Result<(SierraContractCompile)> {
     let list_selector = ListSelector::DefaultList;
     let ContractClassIgnoreAbi {
         sierra_program,
@@ -28,8 +28,7 @@ fn conpile_contract_sierra_to_casm() -> anyhow::Result<()> {
         entry_points_by_type,
         _abi,
     } = serde_json::from_str(
-        &fs::read_to_string("/Users/jelilat/nethermind/hello_cairo/src/Storage.json")
-            .with_context(|| "Failed to read file.")?,
+        &fs::read_to_string(file_path).with_context(|| "Failed to read file.")?,
     )
     .with_context(|| "Deserialization failed.")?;
     let contract_class = ContractClass {
@@ -43,19 +42,10 @@ fn conpile_contract_sierra_to_casm() -> anyhow::Result<()> {
     let casm_contract = CasmContractClass::from_contract_class(contract_class, false, 180000)
         .with_context(|| "Compilation failed.")?;
 
-    println!("{:?}", casm_contract);
-    let res = serde_json::to_string_pretty(&casm_contract.casm_contract_class)
-        .with_context(|| "Casm contract Serialization failed.")?;
-
-    Ok(())
+    Ok(casm_contract)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_conpile_contract_sierra_to_casm() -> anyhow::Result<()> {
-        conpile_contract_sierra_to_casm()
-    }
 }

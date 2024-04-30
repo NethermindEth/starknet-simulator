@@ -21,8 +21,8 @@ pub struct CasmSierraMappingInstruction {
 }
 
 pub struct SierraCompile {
-    casm_sierra_mapping_instruction: CasmSierraMappingInstruction,
-    casm: String,
+    pub casm_sierra_mapping_instruction: CasmSierraMappingInstruction,
+    pub casm: String,
 }
 
 fn compile_sierra_to_casm(sierra_program: String) -> Result<SierraCompile, anyhow::Error> {
