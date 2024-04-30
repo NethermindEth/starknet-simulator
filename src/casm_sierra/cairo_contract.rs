@@ -19,7 +19,9 @@ pub struct ContractClassIgnoreAbi {
     pub _abi: Option<serde_json::Value>,
 }
 
-fn conpile_contract_sierra_to_casm(file_path: String) -> anyhow::Result<(SierraContractCompile)> {
+pub fn conpile_contract_sierra_to_casm(
+    file_path: String,
+) -> anyhow::Result<(SierraContractCompile)> {
     let list_selector = ListSelector::DefaultList;
     let ContractClassIgnoreAbi {
         sierra_program,

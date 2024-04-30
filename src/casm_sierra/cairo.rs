@@ -10,14 +10,14 @@ use std::fs;
 pub type CasmSierraMapping = IndexMap<u64, Vec<u64>>;
 #[derive(Debug, Eq, PartialEq)]
 pub struct CasmInstruction {
-    memory: String,
-    instruction_index: usize,
-    instruction_representation: Option<InstructionRepr>,
+    pub memory: String,
+    pub instruction_index: usize,
+    pub instruction_representation: Option<InstructionRepr>,
 }
 #[derive(Debug, Eq, PartialEq)]
 pub struct CasmSierraMappingInstruction {
-    casm_instructions: Vec<CasmInstruction>,
-    casm_sierra_mapping: CasmSierraMapping,
+    pub casm_instructions: Vec<CasmInstruction>,
+    pub casm_sierra_mapping: CasmSierraMapping,
 }
 
 pub struct SierraCompile {
