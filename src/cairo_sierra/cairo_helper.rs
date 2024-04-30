@@ -53,7 +53,7 @@ pub struct CairoInfo {
     pub fn_name: String,
     pub cairo_locations: Vec<CairoLocation>,
 }
-pub type SierraCairoInfoMapping = IndexMap<u32, CairoInfo>;
+pub type SierraCairoInfoMapping = IndexMap<u64, CairoInfo>;
 
 pub struct FullProgram {
     pub program: Program,
@@ -182,13 +182,13 @@ pub fn generate_sierra_to_cairo_statement_info(
 
     for idx in 0..no_of_statements {
         let statement_idx = StatementIdx(idx);
-        let idx_u32 = idx as u32; // Convert idx to u32
+        let idx_u64 = idx as u64; // Convert idx to u32
         if let Some(function_name) = statements_functions_map.get(&statement_idx) {
-            if let Some(info) = sierra_cairo_info_mapping.get_mut(&idx_u32) {
+            if let Some(info) = sierra_cairo_info_mapping.get_mut(&idx_u64) {
                 info.fn_name = function_name.clone();
             } else {
                 sierra_cairo_info_mapping.insert(
-                    idx_u32,
+                    idx_u64,
                     CairoInfo {
                         fn_name: function_name.clone(),
                         cairo_locations: vec![CairoLocation {
@@ -201,7 +201,7 @@ pub fn generate_sierra_to_cairo_statement_info(
             }
         }
         if let Some(locations) = diagnostic_locations.get(&statement_idx) {
-            if let Some(info) = sierra_cairo_info_mapping.get_mut(&idx_u32) {
+            if let Some(info) = sierra_cairo_info_mapping.get_mut(&idx_u64) {
                 let cairo_locations = &mut info.cairo_locations;
                 for location in locations {
                     let file_id = location.file_id;

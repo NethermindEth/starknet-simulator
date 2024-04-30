@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+actix-web = "4"
 anyhow = "1.0.75"
 itertools = "0.10.1"
 serde = { version = "1.0.192", default-features = false, features = ["derive"] }
@@ -35,3 +36,14 @@ cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo/", package = 
 cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet", branch = "main" }
 cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-to-casm", branch = "main"}
 cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-casm", branch = "main"}
+
+[workspace]
+resolver = "2"
+
+
+[workspace.package]
+version = "2.6.3"
+edition = "2021"
+repository = "https://github.com/NethermindEth/starknet-simulator/"
+license = "Apache-2.0"
+license-file = "LICENSE"
