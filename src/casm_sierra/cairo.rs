@@ -25,7 +25,8 @@ pub struct SierraCompile {
     pub casm: String,
 }
 
-fn compile_sierra_to_casm(sierra_program: String) -> Result<SierraCompile, anyhow::Error> {
+pub fn compile_sierra_to_casm(path: String) -> Result<SierraCompile, anyhow::Error> {
+    let sierra_program = fs::read_to_string(path).expect("Could not read file!");
     let program = ProgramParser::new()
         .parse(&sierra_program)
         .map_err(|_| anyhow::anyhow!("Failed to parse sierra program"))?;
@@ -40,7 +41,7 @@ fn compile_sierra_to_casm(sierra_program: String) -> Result<SierraCompile, anyho
         },
     )
     .with_context(|| "Compilation failed.")?;
-    println!("cairo_program: {}", cairo_program);
+
     if let Ok(casm_sierra_mapping_instruction) =
         get_casm_sierra_mapping_instructions(cairo_program.clone())
     {
@@ -107,12 +108,8 @@ mod tests {
 
     #[test]
     fn test_compile_sierra_to_casm() {
-        let sierra_program =
-            fs::read_to_string("/Users/jelilat/nethermind/hello_cairo/src/fib.sierra")
-                .expect("Could not read file!");
-
-        let casm_sierra_mapping =
-            compile_sierra_to_casm(sierra_program).expect("Compilation failed");
+        let path = "Sierra_file_path.sierra".to_string();
+        let casm_sierra_mapping = compile_sierra_to_casm(path).expect("Compilation failed");
         // println!("{:?}", casm_sierra_mapping);
     }
 }

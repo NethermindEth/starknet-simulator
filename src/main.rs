@@ -4,5 +4,6 @@ pub mod compiler;
 
 fn main() {
     // run compiler
-    compiler::compile_contract::main();
+    // compiler::compile_contract::main();
+    compiler::compile::main();
 }

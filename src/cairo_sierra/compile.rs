@@ -96,7 +96,7 @@ fn compile_contract_with_prepared_and_checked_db(
     let statements_functions_map = statement_locations.get_statements_functions_map_for_tests(db);
 
     let diagnostic_locations = get_diagnostic_locations(db, statement_locations);
-    println!("statement_size: {:?}", sierra_program.statements.len());
+
     let sierra_cairo_info_mapping = generate_sierra_to_cairo_statement_info(
         db,
         sierra_program.statements.len() as usize,
