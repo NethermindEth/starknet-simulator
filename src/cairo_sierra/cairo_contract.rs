@@ -7,7 +7,7 @@ use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
 
 use super::compile::FullProgram;
 
-pub fn compile_sierra(file_path: String) -> anyhow::Result<FullProgram> {
+pub fn compile_contract_cairo_to_sierra(file_path: String) -> anyhow::Result<FullProgram> {
     let crate_path = PathBuf::from(&file_path);
     let list_selector = ListSelector::new(None, None)
         .expect("Both allowed libfunc list name and file were supplied.");

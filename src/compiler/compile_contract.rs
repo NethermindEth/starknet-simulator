@@ -1,4 +1,4 @@
-use crate::cairo_sierra::cairo_contract::compile_sierra;
+use crate::cairo_sierra::cairo_contract::compile_contract_cairo_to_sierra;
 use crate::cairo_sierra::compile::FullProgram;
 use crate::casm_sierra::cairo::CasmSierraMappingInstruction;
 use crate::casm_sierra::cairo_contract::conpile_contract_sierra_to_casm;
@@ -14,7 +14,7 @@ pub struct CompilationResult {
 
 pub fn compile_contract(cairo_path: String, sierra_path: String) -> Result<CompilationResult> {
     // Changed return type to Result from anyhow
-    let full_program = compile_sierra(cairo_path.clone());
+    let full_program = compile_contract_cairo_to_sierra(cairo_path.clone());
     let cairo_sierra = full_program.unwrap();
     let program = serde_json::to_string_pretty(&cairo_sierra.contract_class).unwrap();
     fs::write(&sierra_path, program)
@@ -27,6 +27,7 @@ pub fn compile_contract(cairo_path: String, sierra_path: String) -> Result<Compi
         casm_sierra: casm_program,
     })
 }
+
 pub fn trace_error(pc: u64, compilation_result: CompilationResult) {
     let casm_sierra_mapping = compilation_result
         .casm_sierra
