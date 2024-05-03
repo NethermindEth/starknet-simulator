@@ -21,6 +21,7 @@ cairo-felt = "0.9.1"
 convert_case = "0.6.0"
 smol_str = { version = "0.2.0", features = ["serde"] }
 starknet-crypto = "0.6.2"
+tempfile = "3.2"
 thiserror = "1.0.50"
 cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-compiler", branch = "main" }
 cairo-lang-project = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-project", branch = "main" }
