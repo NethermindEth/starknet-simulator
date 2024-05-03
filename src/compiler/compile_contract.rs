@@ -8,6 +8,7 @@ use crate::casm_sierra::cairo_contract_helper::SierraContractCompile;
 
 use anyhow::{Context, Result};
 
+#[derive(Debug)]
 pub struct ContractCompilationResult {
     pub cairo_sierra: FullProgram,
     pub casm_sierra: SierraContractCompile,
@@ -47,7 +48,7 @@ pub fn compile_contract(code: &str, file_name: &str) -> Result<ContractCompilati
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_compile() {
+    fn test_compile_contract() {
         let code = r#"#[starknet::interface]
         pub trait IHelloStarknet<TContractState> {
             fn increase_balance(ref self: TContractState, amount: felt252);

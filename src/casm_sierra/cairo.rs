@@ -20,6 +20,7 @@ pub struct CasmSierraMappingInstruction {
     pub casm_sierra_mapping: CasmSierraMapping,
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub struct SierraCompile {
     pub casm_sierra_mapping_instruction: CasmSierraMappingInstruction,
     pub casm: String,

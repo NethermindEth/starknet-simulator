@@ -55,6 +55,7 @@ pub struct CairoInfo {
 }
 pub type SierraCairoInfoMapping = IndexMap<u64, CairoInfo>;
 
+#[derive(Debug)]
 pub struct FullProgram {
     pub program: Program,
     pub sierra_cairo_info_mapping: SierraCairoInfoMapping,
