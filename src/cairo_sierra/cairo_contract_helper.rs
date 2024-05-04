@@ -99,12 +99,14 @@ pub fn starknet_compile(
         },
     )?;
 
-    full_program.contract_class.validate_version_compatible(
-        if let Some(allowed_libfuncs_list) = allowed_libfuncs_list {
-            allowed_libfuncs_list
-        } else {
-            ListSelector::default()
-        },
-    )?;
+    full_program
+        .sierra_contract_class
+        .validate_version_compatible(
+            if let Some(allowed_libfuncs_list) = allowed_libfuncs_list {
+                allowed_libfuncs_list
+            } else {
+                ListSelector::default()
+            },
+        )?;
     Ok(full_program)
 }

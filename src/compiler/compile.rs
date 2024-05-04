@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 use tempfile::{tempdir, NamedTempFile};
 
@@ -7,6 +8,7 @@ use crate::casm_sierra::cairo::{compile_sierra_to_casm, SierraCompile};
 
 use anyhow::{Context, Result};
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CompilationResult {
     pub cairo_sierra: FullProgram,
     pub casm_sierra: SierraCompile,

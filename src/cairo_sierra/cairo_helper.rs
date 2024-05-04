@@ -3,6 +3,7 @@
 //! This crate is responsible for compiling a Cairo project into a Sierra program.
 //! It is the main entry point for the compiler.
 use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -12,7 +13,6 @@ use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::DiagnosticLocation;
 use cairo_lang_filesystem::db::FilesGroup;
 use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_filesystem::span::TextPosition;
 use cairo_lang_sierra::debug_info::{Annotations, DebugInfo};
 use cairo_lang_sierra::program::{Program, ProgramArtifact, StatementIdx};
 use cairo_lang_sierra_generator::db::SierraGenGroup;
@@ -42,20 +42,28 @@ pub struct CompilerConfig<'c> {
     pub add_statements_functions: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TextPosition {
+    /// Line index, 0 based.
+    pub line: usize,
+    /// Character index inside the line, 0 based.
+    pub col: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CairoLocation {
     pub file_name: String,
     pub start: TextPosition,
     pub end: TextPosition,
 }
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CairoInfo {
     pub fn_name: String,
     pub cairo_locations: Vec<CairoLocation>,
 }
 pub type SierraCairoInfoMapping = IndexMap<u64, CairoInfo>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FullProgram {
     pub program: Program,
     pub sierra_cairo_info_mapping: SierraCairoInfoMapping,
@@ -209,15 +217,24 @@ pub fn generate_sierra_to_cairo_statement_info(
                     let file_name = file_id.file_name(db);
 
                     let start_offset = location.span.start;
-                    let start_position = start_offset
-                        .position_in_file(db, file_id)
-                        .unwrap_or(TextPosition { line: 0, col: 0 });
+                    let start_position_in_file = start_offset.position_in_file(db, file_id);
+                    let start_position = match start_position_in_file {
+                        Some(position) => TextPosition {
+                            line: position.line,
+                            col: position.col,
+                        },
+                        None => TextPosition { line: 0, col: 0 },
+                    };
 
                     let end_offset = location.span.end;
-                    let end_position = end_offset
-                        .position_in_file(db, file_id)
-                        .unwrap_or(TextPosition { line: 0, col: 0 });
-
+                    let end_position_in_file = end_offset.position_in_file(db, file_id);
+                    let end_position = match end_position_in_file {
+                        Some(position) => TextPosition {
+                            line: position.line,
+                            col: position.col,
+                        },
+                        None => TextPosition { line: 0, col: 0 },
+                    };
                     cairo_locations.push(CairoLocation {
                         file_name,
                         start: start_position,

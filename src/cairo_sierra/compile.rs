@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use anyhow::{Context, Result};
@@ -32,9 +33,9 @@ use cairo_lang_starknet::plugin::consts::{CONSTRUCTOR_MODULE, EXTERNAL_MODULE, L
 
 use super::cairo_helper::SierraCairoInfoMapping;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FullProgram {
-    pub contract_class: ContractClass,
+    pub sierra_contract_class: ContractClass,
     pub sierra_cairo_info_mapping: SierraCairoInfoMapping,
 }
 
@@ -125,7 +126,7 @@ fn compile_contract_with_prepared_and_checked_db(
         Default::default()
     };
 
-    let contract_class = ContractClass::new(
+    let sierra_contract_class = ContractClass::new(
         &sierra_program,
         entry_points_by_type,
         Some(
@@ -137,9 +138,9 @@ fn compile_contract_with_prepared_and_checked_db(
         ),
         annotations,
     )?;
-    contract_class.sanity_check();
+    sierra_contract_class.sanity_check();
     Ok(FullProgram {
-        contract_class,
+        sierra_contract_class,
         sierra_cairo_info_mapping,
     })
 }

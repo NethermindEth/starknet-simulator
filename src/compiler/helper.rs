@@ -1,6 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 use crate::compiler::compile::CompilationResult;
 use crate::compiler::compile_contract::ContractCompilationResult;
 
+#[derive(Serialize, Deserialize)]
 pub enum CompilationResultType {
     Contract(ContractCompilationResult),
     General(CompilationResult),

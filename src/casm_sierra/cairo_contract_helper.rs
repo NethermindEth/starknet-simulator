@@ -226,7 +226,7 @@ impl TypeResolver<'_> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct SierraContractCompile {
     pub casm_sierra_mapping_instruction: CasmSierraMappingInstruction,
     pub casm_contract_class: CasmContractClass,

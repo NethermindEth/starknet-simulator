@@ -1,14 +1,14 @@
+use serde::{Deserialize, Serialize};
 use std::io::Write;
 use tempfile::{tempdir, NamedTempFile};
 
-use crate::cairo_sierra::cairo_contract::compile_contract_cairo_to_sierra;
-use crate::cairo_sierra::compile::FullProgram;
+use crate::cairo_sierra::{cairo_contract::compile_contract_cairo_to_sierra, compile::FullProgram};
 use crate::casm_sierra::cairo_contract::conpile_contract_sierra_to_casm;
 use crate::casm_sierra::cairo_contract_helper::SierraContractCompile;
 
 use anyhow::{Context, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ContractCompilationResult {
     pub cairo_sierra: FullProgram,
     pub casm_sierra: SierraContractCompile,
@@ -28,8 +28,8 @@ pub fn compile_contract(code: &str, file_name: &str) -> Result<ContractCompilati
 
     let full_program = compile_contract_cairo_to_sierra(cairo_path.clone());
     let cairo_sierra = full_program.unwrap();
-    let program = serde_json::to_string_pretty(&cairo_sierra.contract_class).unwrap();
 
+    let program = serde_json::to_string_pretty(&cairo_sierra.sierra_contract_class).unwrap();
     let sierra_file_path = cairo_file_path.with_extension("sierra");
 
     let mut sierra_temp_file = NamedTempFile::new_in(dir.path())?;
@@ -38,7 +38,8 @@ pub fn compile_contract(code: &str, file_name: &str) -> Result<ContractCompilati
     let sierra_path = sierra_file_path.to_str().unwrap().to_string();
 
     let casm_program = conpile_contract_sierra_to_casm(sierra_path);
-    let casm_program = casm_program.with_context(|| "Failed to compile CASM program")?; // Added with_context for casm_program
+    let casm_program = casm_program.with_context(|| "Failed to compile CASM program")?;
+
     Ok(ContractCompilationResult {
         cairo_sierra,
         casm_sierra: casm_program,

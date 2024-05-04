@@ -37,6 +37,7 @@ cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo/", package = 
 cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet", branch = "main" }
 cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-to-casm", branch = "main"}
 cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-casm", branch = "main"}
+actix-cors = "0.7.0"
 
 [workspace]
 resolver = "2"
