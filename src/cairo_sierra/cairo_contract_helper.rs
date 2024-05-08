@@ -76,7 +76,6 @@ pub fn compile_contract_in_prepared_db(
     };
 
     let contracts = vec![contract];
-    print!("contract: {:?}", contract.submodule_id.full_path(db));
     let mut classes = compile_prepared_db(db, &contracts, compiler_config)?;
     assert_eq!(classes.len(), 1);
     Ok(classes.remove(0))
