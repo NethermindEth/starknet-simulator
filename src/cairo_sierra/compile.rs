@@ -103,6 +103,7 @@ fn compile_contract_with_prepared_and_checked_db(
         statements_functions_map,
         diagnostic_locations,
     );
+    let sierra_cairo_statement_info = sierra_cairo_info_mapping?.sierra_cairo_statement_info;
 
     if compiler_config.replace_ids {
         sierra_program = replace_sierra_ids_in_program(db, &sierra_program);
@@ -139,9 +140,10 @@ fn compile_contract_with_prepared_and_checked_db(
         annotations,
     )?;
     sierra_contract_class.sanity_check();
+
     Ok(FullProgram {
         sierra_contract_class,
-        sierra_cairo_info_mapping: sierra_cairo_info_mapping.unwrap(),
+        sierra_cairo_info_mapping: sierra_cairo_statement_info,
     })
 }
 

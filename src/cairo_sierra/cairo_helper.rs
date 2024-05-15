@@ -180,8 +180,8 @@ pub fn get_diagnostic_locations(
 }
 
 pub struct SierraCairoStatement {
-    contract_code: String,
-    sierra_cairo_statement_info: SierraCairoInfoMapping,
+    pub contract_code: String,
+    pub sierra_cairo_statement_info: SierraCairoInfoMapping,
 }
 
 // Generates mapping information between Sierra and Cairo statements
