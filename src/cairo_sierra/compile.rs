@@ -141,7 +141,7 @@ fn compile_contract_with_prepared_and_checked_db(
     sierra_contract_class.sanity_check();
     Ok(FullProgram {
         sierra_contract_class,
-        sierra_cairo_info_mapping,
+        sierra_cairo_info_mapping: sierra_cairo_info_mapping.unwrap(),
     })
 }
 
