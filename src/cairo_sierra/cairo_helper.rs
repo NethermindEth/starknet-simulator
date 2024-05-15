@@ -4,26 +4,28 @@
 //! It is the main entry point for the compiler.
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use std::sync::Arc;
+use std::{fs::File, io::Write, path::Path, sync::Arc};
 
 use ::cairo_lang_diagnostics::ToOption;
 use anyhow::{Context, Result};
 use cairo_lang_defs::db::DefsGroup;
 use cairo_lang_diagnostics::DiagnosticLocation;
-use cairo_lang_filesystem::db::FilesGroup;
-use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_sierra::debug_info::{Annotations, DebugInfo};
-use cairo_lang_sierra::program::{Program, ProgramArtifact, StatementIdx};
-use cairo_lang_sierra_generator::db::SierraGenGroup;
-use cairo_lang_sierra_generator::program_generator::SierraProgramWithDebug;
-use cairo_lang_sierra_generator::replace_ids::replace_sierra_ids_in_program;
-use cairo_lang_sierra_generator::statements_locations::StatementsLocations;
-use cairo_lang_utils::unordered_hash_map::UnorderedHashMap;
+use cairo_lang_filesystem::{
+    db::FilesGroup,
+    ids::{CrateId, FileLongId},
+};
+use cairo_lang_sierra::program::{Program, StatementIdx};
+use cairo_lang_sierra_generator::{
+    db::SierraGenGroup, program_generator::SierraProgramWithDebug,
+    replace_ids::replace_sierra_ids_in_program, statements_locations::StatementsLocations,
+};
+use cairo_lang_utils::{unordered_hash_map::UnorderedHashMap, LookupIntern};
 
-use cairo_lang_compiler::db::RootDatabase;
-use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
-use cairo_lang_compiler::project::{get_main_crate_ids_from_project, setup_project, ProjectConfig};
+use cairo_lang_compiler::{
+    db::RootDatabase,
+    diagnostics::DiagnosticsReporter,
+    project::{get_main_crate_ids_from_project, setup_project, ProjectConfig},
+};
 
 /// Configuration for the compiler.
 #[derive(Default)]
@@ -59,12 +61,13 @@ pub struct CairoLocation {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CairoInfo {
     pub fn_name: String,
-    pub cairo_locations: Vec<CairoLocation>,
+    pub cairo_locations: Option<Vec<CairoLocation>>,
 }
 pub type SierraCairoInfoMapping = IndexMap<u64, CairoInfo>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FullProgram {
+    pub contract: String,
     pub program: Program,
     pub sierra_cairo_info_mapping: SierraCairoInfoMapping,
 }
@@ -140,10 +143,14 @@ pub fn compile_prepared_db_program(
                 diagnostic_locations,
             );
 
-            Ok(FullProgram {
-                program: sierra_program_with_debug.program,
-                sierra_cairo_info_mapping,
-            })
+            match sierra_cairo_info_mapping {
+                Ok(mapping) => Ok(FullProgram {
+                    contract: mapping.contract_code,
+                    program: sierra_program_with_debug.program,
+                    sierra_cairo_info_mapping: mapping.sierra_cairo_statement_info,
+                }),
+                Err(e) => Err(e.into()),
+            }
         }
         Err(e) => Err(e),
     }
@@ -172,6 +179,11 @@ pub fn get_diagnostic_locations(
         )
 }
 
+pub struct SierraCairoStatement {
+    pub contract_code: String,
+    pub sierra_cairo_statement_info: SierraCairoInfoMapping,
+}
+
 // Generates mapping information between Sierra and Cairo statements
 //
 // # Arguments
@@ -186,12 +198,13 @@ pub fn generate_sierra_to_cairo_statement_info(
     no_of_statements: usize,
     statements_functions_map: UnorderedHashMap<StatementIdx, String>,
     diagnostic_locations: IndexMap<StatementIdx, Vec<DiagnosticLocation>>,
-) -> SierraCairoInfoMapping {
+) -> Result<SierraCairoStatement, std::io::Error> {
     let mut sierra_cairo_info_mapping: SierraCairoInfoMapping = IndexMap::new();
+    let mut contract_content: String = String::new();
 
     for idx in 0..no_of_statements {
         let statement_idx = StatementIdx(idx);
-        let idx_u64 = idx as u64; // Convert idx to u32
+        let idx_u64 = idx as u64; // Convert idx to u64
         if let Some(function_name) = statements_functions_map.get(&statement_idx) {
             if let Some(info) = sierra_cairo_info_mapping.get_mut(&idx_u64) {
                 info.fn_name = function_name.clone();
@@ -200,11 +213,7 @@ pub fn generate_sierra_to_cairo_statement_info(
                     idx_u64,
                     CairoInfo {
                         fn_name: function_name.clone(),
-                        cairo_locations: vec![CairoLocation {
-                            file_name: String::new(),
-                            start: TextPosition { line: 0, col: 0 },
-                            end: TextPosition { line: 0, col: 0 },
-                        }],
+                        cairo_locations: None,
                     },
                 );
             }
@@ -215,6 +224,14 @@ pub fn generate_sierra_to_cairo_statement_info(
                 for location in locations {
                     let file_id = location.file_id;
                     let file_name = file_id.file_name(db);
+                    if contract_content.is_empty() && file_name == "contract" {
+                        match file_id.lookup_intern(db) {
+                            FileLongId::Virtual(vf) => {
+                                contract_content = vf.content.to_string();
+                            }
+                            _ => {}
+                        }
+                    }
 
                     let start_offset = location.span.start;
                     let start_position_in_file = start_offset.position_in_file(db, file_id);
@@ -235,16 +252,29 @@ pub fn generate_sierra_to_cairo_statement_info(
                         },
                         None => TextPosition { line: 0, col: 0 },
                     };
-                    cairo_locations.push(CairoLocation {
-                        file_name,
-                        start: start_position,
-                        end: end_position,
-                    });
+                    if let Some(locations) = cairo_locations {
+                        locations.push(CairoLocation {
+                            file_name,
+                            start: start_position,
+                            end: end_position,
+                        });
+                    } else {
+                        *cairo_locations = Some(vec![CairoLocation {
+                            file_name,
+                            start: start_position,
+                            end: end_position,
+                        }]);
+                    }
                 }
             }
         }
     }
-    sierra_cairo_info_mapping
+    let mut file = File::create("contract.cairo")?;
+    file.write_all(contract_content.as_bytes())?;
+    Ok(SierraCairoStatement {
+        contract_code: contract_content,
+        sierra_cairo_statement_info: sierra_cairo_info_mapping,
+    })
 }
 
 /// Runs Cairo compiler.
@@ -280,46 +310,4 @@ pub fn compile_prepared_db(
     }
 
     Ok(sierra_program_with_debug)
-}
-
-/// Runs Cairo compiler.
-///
-/// Wrapper over [`compile_prepared_db`], but this function returns [`ProgramArtifact`]
-/// with requested debug info.
-///
-/// # Arguments
-/// * `db` - Preloaded compilation database.
-/// * `main_crate_ids` - [`CrateId`]s to compile. Do not include dependencies here, only pass
-///   top-level crates in order to eliminate unused code. Use
-///   `db.intern_crate(CrateLongId::Real(name))` in order to obtain [`CrateId`] from its name.
-/// * `compiler_config` - The compiler configuration.
-/// # Returns
-/// * `Ok(ProgramArtifact)` - The compiled program artifact with requested debug info.
-/// * `Err(anyhow::Error)` - Compilation failed.
-pub fn compile_prepared_db_program_artifact(
-    db: &mut RootDatabase,
-    main_crate_ids: Vec<CrateId>,
-    compiler_config: CompilerConfig<'_>,
-) -> Result<ProgramArtifact> {
-    let add_statements_functions = compiler_config.add_statements_functions;
-
-    let sierra_program_with_debug = compile_prepared_db(db, main_crate_ids, compiler_config)?;
-    let mut program_artifact = ProgramArtifact::stripped(sierra_program_with_debug.program);
-
-    if add_statements_functions {
-        let statements_functions = sierra_program_with_debug
-            .debug_info
-            .statements_locations
-            .extract_statements_functions(db);
-
-        let debug_info = DebugInfo {
-            type_names: Default::default(),
-            libfunc_names: Default::default(),
-            user_func_names: Default::default(),
-            annotations: Annotations::from(statements_functions),
-        };
-        program_artifact = program_artifact.with_debug_info(debug_info);
-    }
-
-    Ok(program_artifact)
 }

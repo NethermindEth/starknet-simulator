@@ -5,7 +5,6 @@ use anyhow::Context;
 use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
 use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoints};
 use cairo_lang_utils::bigint::BigUintAsHex;
-use clap::Parser;
 use serde::Deserialize;
 
 /// Same as `ContractClass` - but ignores `abi` in deserialization.
