@@ -27,7 +27,7 @@ use crate::cairo_sierra::cairo_helper::{
 };
 use cairo_lang_starknet::abi::AbiBuilder;
 use cairo_lang_starknet::contract::{
-    find_contracts, get_contract_abi_functions, ContractDeclaration,
+    get_contract_abi_functions, ContractDeclaration,
 };
 use cairo_lang_starknet::plugin::consts::{CONSTRUCTOR_MODULE, EXTERNAL_MODULE, L1_HANDLER_MODULE};
 

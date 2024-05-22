@@ -20,7 +20,7 @@ pub struct ContractClassIgnoreAbi {
 
 pub fn conpile_contract_sierra_to_casm(
     file_path: String,
-) -> anyhow::Result<(SierraContractCompile)> {
+) -> anyhow::Result<SierraContractCompile> {
     let list_selector = ListSelector::DefaultList;
     let ContractClassIgnoreAbi {
         sierra_program,

@@ -1,6 +1,4 @@
-use std::borrow::Borrow;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
@@ -8,20 +6,13 @@ use cairo_lang_compiler::project::setup_project;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_defs::ids::TopLevelLanguageElementId;
 use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_sierra_generator::replace_ids::{replace_sierra_ids_in_program, SierraIdReplacer};
 use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
-use cairo_lang_starknet_classes::contract_class::{
-    ContractClass, ContractEntryPoint, ContractEntryPoints,
-};
-use itertools::{chain, Itertools};
+use itertools::{Itertools};
 
 use crate::cairo_sierra::compile::{compile_prepared_db, FullProgram};
-use cairo_lang_starknet::abi::AbiBuilder;
 use cairo_lang_starknet::contract::{
-    find_contracts, get_contract_abi_functions, get_selector_and_sierra_function,
-    ContractDeclaration,
+    find_contracts,
 };
-use cairo_lang_starknet::plugin::consts::{CONSTRUCTOR_MODULE, EXTERNAL_MODULE, L1_HANDLER_MODULE};
 use cairo_lang_starknet::starknet_plugin_suite;
 
 /// Compile the contract given by path.
