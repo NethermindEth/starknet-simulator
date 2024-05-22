@@ -25,24 +25,24 @@ smol_str = { version = "0.2.0", features = ["serde"] }
 starknet-crypto = "0.6.2"
 tempfile = "3.2"
 thiserror = "1.0.50"
-cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-compiler", branch = "main" }
-cairo-lang-project = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-project", branch = "main" }
-cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-filesystem", branch = "main" }
-cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra", branch = "main" }
-cairo-lang-sierra-gas = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-gas", branch = "main" }
-cairo-lang-sierra-generator = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-generator", branch = "main" }
-cairo-lang-sierra-type-size = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-type-size", branch = "main" }
-cairo-lang-diagnostics = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-diagnostics", branch = "main" }
-cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-syntax", branch = "main" }
-cairo-lang-lowering = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-lowering", branch = "main" }
-cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-utils", branch = "main" }
-cairo-lang-starknet-classes = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet-classes", branch = "main" }
-cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-defs", branch = "main" }
-cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet", branch = "main" }
-cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-to-casm", branch = "main"}
-cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-casm", branch = "main"}
-cairo1-run = { git = "https://github.com/lambdaclass/cairo-vm/", package = "cairo1-run", branch = "main"}
-cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm/", package = "cairo-vm", branch = "main"}
+cairo-lang-compiler = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-compiler", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-project = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-project", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-filesystem = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-filesystem", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-sierra = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-sierra-gas = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-gas", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-sierra-generator = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-generator", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-sierra-type-size = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-type-size", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-diagnostics = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-diagnostics", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-syntax = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-syntax", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-lowering = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-lowering", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-utils = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-utils", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-starknet-classes = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet-classes", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-defs = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-defs", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-starknet = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-starknet", rev = "447c6eb01364449dc67b676073646338c7e364ce" }
+cairo-lang-sierra-to-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-sierra-to-casm", rev = "447c6eb01364449dc67b676073646338c7e364ce"}
+cairo-lang-casm = { git = "https://github.com/starkware-libs/cairo/", package = "cairo-lang-casm", rev = "447c6eb01364449dc67b676073646338c7e364ce"}
+cairo1-run = { git = "https://github.com/lambdaclass/cairo-vm/", package = "cairo1-run", rev = "258dd842dd167aa18c014869dbf400473fa4963f"}
+cairo-vm = { git = "https://github.com/lambdaclass/cairo-vm/", package = "cairo-vm", rev = "258dd842dd167aa18c014869dbf400473fa4963f"}
 cairo-lang-sierra-2-point-6 = { package = "cairo-lang-sierra", version = "2.6.3" }
 cairo-lang-starknet-classes-2-point-6 = { package = "cairo-lang-starknet-classes", version = "2.6.3" }
 starknet-types-core = { version = "0.1.0", default-features = false, features = ["serde", "curve", "num-traits", "hash"] }
