@@ -71,8 +71,8 @@ async fn trace_error(input: web::Json<TraceInput>) -> impl Responder {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         let cors = Cors::default()
-            .allowed_origin("http://localhost:3000") // Adjust this to match your frontend's URL
-            .allowed_methods(vec!["GET", "POST"]) // Methods you want to allow
+            .allowed_origin("http://localhost:3000")
+            .allowed_methods(vec!["GET", "POST"])
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             .allowed_header(http::header::CONTENT_TYPE)
             .max_age(3600);
