@@ -7,12 +7,10 @@ use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_defs::ids::TopLevelLanguageElementId;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
-use itertools::{Itertools};
+use itertools::Itertools;
 
 use crate::cairo_sierra::compile::{compile_prepared_db, FullProgram};
-use cairo_lang_starknet::contract::{
-    find_contracts,
-};
+use cairo_lang_starknet::contract::find_contracts;
 use cairo_lang_starknet::starknet_plugin_suite;
 
 /// Compile the contract given by path.
