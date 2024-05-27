@@ -21,7 +21,6 @@ use cairo_lang_sierra::program::{
 };
 use cairo_lang_utils::bigint::BigUintAsHex;
 use cairo_lang_utils::ordered_hash_set::OrderedHashSet;
-use cairo_lang_utils::require;
 use cairo_lang_utils::unordered_hash_map::UnorderedHashMap;
 use num_bigint::{BigInt, BigUint, ToBigInt};
 use num_traits::{Signed, ToPrimitive};
@@ -30,8 +29,8 @@ use smol_str::SmolStr;
 use thiserror::Error;
 
 use crate::casm_sierra::felt252_vec_compression::{compress, decompress};
-use cairo_lang_starknet_classes::compiler_version::VersionId;
-use cairo_lang_starknet_classes::keccak::starknet_keccak;
+use cairo_lang_starknet::compiler_version::VersionId;
+use cairo_lang_starknet::contract::starknet_keccak;
 
 #[derive(Error, Debug, Eq, PartialEq)]
 pub enum Felt252SerdeError {
@@ -76,7 +75,7 @@ pub fn sierra_to_felt252s(
 /// Deserializes a Sierra program from a slice of felt252s.
 ///
 /// Returns (sierra_version_id, compiler_version_id, program).
-/// See [cairo_lang_starknet_classes::compiler_version].
+/// See [cairo_lang_starknet::compiler_version].
 pub fn sierra_from_felt252s(
     felts: &[BigUintAsHex],
 ) -> Result<(VersionId, VersionId, Program), Felt252SerdeError> {
@@ -351,8 +350,9 @@ impl Felt252Serde for Program {
         // Type declarations.
         self.type_declarations.len().serialize(output)?;
         for (i, e) in self.type_declarations.iter().enumerate() {
-            require(i as u64 == e.id.id)
-                .ok_or(Felt252SerdeError::OutOfOrderTypeDeclarationsForSerialization)?;
+            if i as u64 != e.id.id {
+                return Err(Felt252SerdeError::OutOfOrderTypeDeclarationsForSerialization);
+            }
             ConcreteTypeInfo {
                 long_id: e.long_id.clone(),
                 declared_type_info: e.declared_type_info.clone(),
@@ -362,8 +362,9 @@ impl Felt252Serde for Program {
         // Libfunc declaration.
         self.libfunc_declarations.len().serialize(output)?;
         for (i, e) in self.libfunc_declarations.iter().enumerate() {
-            require(i as u64 == e.id.id)
-                .ok_or(Felt252SerdeError::OutOfOrderLibfuncDeclarationsForSerialization)?;
+            if i as u64 != e.id.id {
+                return Err(Felt252SerdeError::OutOfOrderLibfuncDeclarationsForSerialization);
+            }
             e.long_id.serialize(output)?;
         }
         // Statements.
@@ -371,14 +372,17 @@ impl Felt252Serde for Program {
         // Function declaration.
         self.funcs.len().serialize(output)?;
         for (i, f) in self.funcs.iter().enumerate() {
-            require(i as u64 == f.id.id)
-                .ok_or(Felt252SerdeError::OutOfOrderUserFunctionDeclarationsForSerialization)?;
+            if i as u64 != f.id.id {
+                return Err(Felt252SerdeError::OutOfOrderUserFunctionDeclarationsForSerialization);
+            }
             f.signature.serialize(output)?;
-            require(f.signature.param_types.len() == f.params.len())
-                .ok_or(Felt252SerdeError::FunctionArgumentsMismatchInSerialization)?;
+            if f.signature.param_types.len() != f.params.len() {
+                return Err(Felt252SerdeError::FunctionArgumentsMismatchInSerialization);
+            }
             for (param, ty) in f.params.iter().zip(f.signature.param_types.iter()) {
-                require(param.ty == *ty)
-                    .ok_or(Felt252SerdeError::FunctionArgumentsMismatchInSerialization)?;
+                if param.ty != *ty {
+                    return Err(Felt252SerdeError::FunctionArgumentsMismatchInSerialization);
+                }
                 param.id.serialize(output)?;
             }
             f.entry_point.serialize(output)?;

@@ -12,12 +12,9 @@ use cairo_lang_sierra::debug_info::Annotations;
 use cairo_lang_sierra::ids::FunctionId;
 use cairo_lang_sierra_generator::canonical_id_replacer::CanonicalReplacer;
 use cairo_lang_sierra_generator::db::SierraGenGroup;
-use cairo_lang_sierra_generator::program_generator::SierraProgramWithDebug;
 use cairo_lang_sierra_generator::replace_ids::{replace_sierra_ids_in_program, SierraIdReplacer};
-use cairo_lang_starknet_classes::contract_class::{
-    ContractClass, ContractEntryPoint, ContractEntryPoints,
-};
-use cairo_lang_starknet_classes::keccak::starknet_keccak;
+use cairo_lang_starknet::contract::starknet_keccak;
+use cairo_lang_starknet::contract_class::{ContractClass, ContractEntryPoint, ContractEntryPoints};
 use cairo_lang_utils::Intern;
 use itertools::{chain, Itertools};
 
@@ -26,9 +23,7 @@ use crate::cairo_sierra::cairo_helper::{
     generate_sierra_to_cairo_statement_info, get_diagnostic_locations,
 };
 use cairo_lang_starknet::abi::AbiBuilder;
-use cairo_lang_starknet::contract::{
-    get_contract_abi_functions, ContractDeclaration,
-};
+use cairo_lang_starknet::contract::{get_contract_abi_functions, ContractDeclaration};
 use cairo_lang_starknet::plugin::consts::{CONSTRUCTOR_MODULE, EXTERNAL_MODULE, L1_HANDLER_MODULE};
 
 use super::cairo_helper::SierraCairoInfoMapping;
@@ -79,18 +74,28 @@ fn compile_contract_with_prepared_and_checked_db(
         l1_handler,
         constructor,
     } = extract_semantic_entrypoints(db, contract)?;
-    let SierraProgramWithDebug {
-        program: mut sierra_program,
-        debug_info,
-    } = Arc::unwrap_or_clone(
-        db.get_sierra_program_for_functions(
+    let (program_arc, debug_info_arc) = db
+        .get_sierra_program_for_functions(
             chain!(&external, &l1_handler, &constructor)
                 .map(|f| f.value)
                 .collect(),
         )
         .to_option()
-        .with_context(|| "Compilation failed without any diagnostics.")?,
-    );
+        .with_context(|| "Compilation failed without any diagnostics.")?;
+
+    let ProgramArtifact {
+        program: mut sierra_program,
+        debug_info,
+    } = Arc::try_unwrap(program_arc)
+        .map_err(|_| anyhow::anyhow!("Failed to unwrap Arc for program."))
+        .and_then(|program| {
+            Arc::try_unwrap(debug_info_arc)
+                .map_err(|_| anyhow::anyhow!("Failed to unwrap Arc for debug info."))
+                .map(|debug_info| SierraProgramWithDebug {
+                    program,
+                    debug_info,
+                })
+        })?;
 
     let statement_locations = debug_info.clone().statements_locations;
     let statements_functions_map = statement_locations.get_statements_functions_map_for_tests(db);

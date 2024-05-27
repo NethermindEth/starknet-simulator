@@ -2,8 +2,8 @@ use std::fs;
 
 use crate::casm_sierra::cairo_contract_helper::{CasmContractClass, SierraContractCompile};
 use anyhow::Context;
-use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
-use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoints};
+use cairo_lang_starknet::allowed_libfuncs::{validate_compatible_sierra_version, ListSelector};
+use cairo_lang_starknet::contract_class::{ContractClass, ContractEntryPoints};
 use cairo_lang_utils::bigint::BigUintAsHex;
 use serde::Deserialize;
 
@@ -18,9 +18,7 @@ pub struct ContractClassIgnoreAbi {
     pub _abi: Option<serde_json::Value>,
 }
 
-pub fn conpile_contract_sierra_to_casm(
-    file_path: String,
-) -> anyhow::Result<SierraContractCompile> {
+pub fn conpile_contract_sierra_to_casm(file_path: String) -> anyhow::Result<SierraContractCompile> {
     let list_selector = ListSelector::DefaultList;
     let ContractClassIgnoreAbi {
         sierra_program,
@@ -39,7 +37,7 @@ pub fn conpile_contract_sierra_to_casm(
         entry_points_by_type,
         abi: None,
     };
-    contract_class.validate_version_compatible(list_selector)?;
+    validate_compatible_sierra_version(&contract_class, list_selector)?;
     let casm_contract = CasmContractClass::from_contract_class(contract_class, false, 180000)
         .with_context(|| "Compilation failed.")?;
 

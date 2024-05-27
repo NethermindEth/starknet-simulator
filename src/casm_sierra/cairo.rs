@@ -2,7 +2,7 @@ use anyhow::Context;
 use cairo_lang_casm::assembler::{ApUpdate, FpUpdate, Op1Addr, Opcode, PcUpdate, Res};
 use cairo_lang_casm::operand::Register;
 use cairo_lang_sierra::ProgramParser;
-use cairo_lang_sierra_to_casm::compiler::{compile, CairoProgram, SierraToCasmConfig};
+use cairo_lang_sierra_to_casm::compiler::{compile, CairoProgram};
 use cairo_lang_sierra_to_casm::metadata::calc_metadata;
 use num_bigint::BigInt;
 use serde::{Deserialize, Serialize};
@@ -103,10 +103,7 @@ pub fn compile_sierra_to_casm(path: String) -> Result<SierraCompile, anyhow::Err
         &program,
         &calc_metadata(&program, Default::default())
             .with_context(|| "Failed calculating Sierra variables.")?,
-        SierraToCasmConfig {
-            gas_usage_check: true,
-            max_bytecode_size: usize::MAX,
-        },
+        true,
     )
     .with_context(|| "Compilation failed.")?;
 

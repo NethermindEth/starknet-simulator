@@ -1,6 +1,5 @@
 use cairo_lang_sierra::program::{Program, Statement, StatementIdx};
 use cairo_lang_sierra_to_casm::compiler::CairoProgram;
-use cairo_lang_utils::require;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -58,8 +57,9 @@ fn find_functions_segments(program: &Program) -> Result<Vec<usize>, Segmentation
         .map(|func| func.entry_point.0)
         .collect();
     function_statement_ids.sort();
-    require(matches!(function_statement_ids.first(), Some(0)))
-        .ok_or(SegmentationError::NoFunctionStartAtZero)?;
+    if *function_statement_ids.first().unwrap() != 0 {
+        return Err(SegmentationError::NoFunctionStartAtZero);
+    }
 
     // Sanity check: go over the statements and check that there are no jump outside of functions.
     let mut current_function = FunctionInfo::new(0);
@@ -92,7 +92,7 @@ fn functions_statement_ids_to_offsets(
             .sierra_statement_info
             .get(statement_id)
             .unwrap_or_else(|| panic!("Missing bytecode offset for statement id {statement_id}."))
-            .start_offset
+            .code_offset
     };
     segment_starts_statements
         .iter()
@@ -184,11 +184,12 @@ impl FunctionInfo {
 
 /// Returns the offsets of the const segments.
 fn consts_segments_offsets(cairo_program: &CairoProgram, bytecode_len: usize) -> Vec<usize> {
-    let const_segments_start_offset = bytecode_len - cairo_program.consts_info.total_segments_size;
+    let const_segments_start_offset =
+        bytecode_len - cairo_program.const_segment_info.const_segment_size;
     cairo_program
-        .consts_info
-        .segments
-        .values()
-        .map(|segment| const_segments_start_offset + segment.segment_offset)
+        .const_segment_info
+        .const_allocations
+        .iter()
+        .map(|const_allocation| const_segments_start_offset + const_allocation.1.offset)
         .collect()
 }

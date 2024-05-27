@@ -19,14 +19,13 @@ use cairo_lang_sierra::extensions::structure::StructType;
 use cairo_lang_sierra::extensions::NamedType;
 use cairo_lang_sierra::ids::{ConcreteTypeId, GenericTypeId};
 use cairo_lang_sierra::program::{ConcreteTypeLongId, GenericArg, TypeDeclaration};
-use cairo_lang_sierra_to_casm::compiler::{CompilationError, SierraToCasmConfig};
+use cairo_lang_sierra_to_casm::compiler::CompilationError;
 use cairo_lang_sierra_to_casm::metadata::{
     calc_metadata, MetadataComputationConfig, MetadataError,
 };
-use cairo_lang_starknet_classes::allowed_libfuncs::AllowedLibfuncsError;
+use cairo_lang_starknet::allowed_libfuncs::AllowedLibfuncsError;
 use cairo_lang_utils::bigint::{deserialize_big_uint, serialize_big_uint, BigUintAsHex};
 use cairo_lang_utils::ordered_hash_map::OrderedHashMap;
-use cairo_lang_utils::require;
 use cairo_lang_utils::unordered_hash_map::UnorderedHashMap;
 use cairo_lang_utils::unordered_hash_set::UnorderedHashSet;
 use convert_case::{Case, Casing};
@@ -42,18 +41,19 @@ use crate::casm_sierra::contract_segmentation::{
     compute_bytecode_segment_lengths, NestedIntList, SegmentationError,
 };
 use crate::casm_sierra::felt252_serde::{sierra_from_felt252s, Felt252SerdeError};
-use cairo_lang_starknet_classes::compiler_version::{
+use cairo_lang_starknet::compiler_version::{
     current_compiler_version_id, current_sierra_version_id, VersionId,
-    CONTRACT_SEGMENTATION_MINOR_VERSION,
 };
-use cairo_lang_starknet_classes::contract_class::{ContractClass, ContractEntryPoint};
-use cairo_lang_starknet_classes::keccak::starknet_keccak;
+use cairo_lang_starknet::contract::starknet_keccak;
+use cairo_lang_starknet::contract_class::{ContractClass, ContractEntryPoint};
 use thiserror::Error;
 
 use super::cairo::{get_casm_sierra_mapping_instructions, CasmSierraMappingInstruction};
 
 /// The expected gas cost of an entrypoint.
 pub const ENTRY_POINT_COST: i32 = 10000;
+
+pub const CONTRACT_SEGMENTATION_MINOR_VERSION: usize = 5; // TODO: This may not be accurate.
 
 static CONSTRUCTOR_ENTRY_POINT_SELECTOR: Lazy<BigUint> =
     Lazy::new(|| starknet_keccak(b"constructor"));
@@ -193,7 +193,9 @@ impl TypeResolver<'_> {
     /// Extracts types `TOk`, `TErr` from the type `Result<TOk, TErr>`.
     fn extract_result_ty(&self, ty: &ConcreteTypeId) -> Option<(&ConcreteTypeId, &ConcreteTypeId)> {
         let long_id = self.get_long_id(ty);
-        require(long_id.generic_id == EnumType::id())?;
+        if long_id.generic_id != EnumType::id() {
+            return None;
+        }
         let [GenericArg::UserType(_), GenericArg::Type(result_tuple_ty), GenericArg::Type(err_ty)] =
             long_id.generic_args.as_slice()
         else {
@@ -205,7 +207,9 @@ impl TypeResolver<'_> {
     /// Extracts type `T` from the tuple type `(T,)`.
     fn extract_struct1(&self, ty: &ConcreteTypeId) -> Option<&ConcreteTypeId> {
         let long_id = self.get_long_id(ty);
-        require(long_id.generic_id == StructType::id())?;
+        if long_id.generic_id != StructType::id() {
+            return None;
+        }
         let [GenericArg::UserType(_), GenericArg::Type(ty0)] = long_id.generic_args.as_slice()
         else {
             return None;
@@ -216,7 +220,9 @@ impl TypeResolver<'_> {
     /// Extracts types `T0`, `T1` from the tuple type `(T0, T1)`.
     fn extract_struct2(&self, ty: &ConcreteTypeId) -> Option<(&ConcreteTypeId, &ConcreteTypeId)> {
         let long_id = self.get_long_id(ty);
-        require(long_id.generic_id == StructType::id())?;
+        if long_id.generic_id != StructType::id() {
+            return None;
+        }
         let [GenericArg::UserType(_), GenericArg::Type(ty0), GenericArg::Type(ty1)] =
             long_id.generic_args.as_slice()
         else {
@@ -431,19 +437,11 @@ impl CasmContractClass {
                 .collect(),
             linear_gas_solver: no_eq_solver,
             linear_ap_change_solver: no_eq_solver,
-            skip_non_linear_solver_comparisons: false,
-            compute_runtime_costs: false,
         };
         let metadata = calc_metadata(&program, metadata_computation_config)?;
 
-        let cairo_program = cairo_lang_sierra_to_casm::compiler::compile(
-            &program,
-            &metadata,
-            SierraToCasmConfig {
-                gas_usage_check: true,
-                max_bytecode_size,
-            },
-        )?;
+        let cairo_program =
+            cairo_lang_sierra_to_casm::compiler::compile(&program, &metadata, true)?;
 
         let AssembledCairoProgram { bytecode, hints } = cairo_program.clone().assemble();
         let bytecode = bytecode
@@ -489,24 +487,28 @@ impl CasmContractClass {
             let statement_id = function.entry_point;
 
             // The expected return types are [builtins.., gas_builtin, system, PanicResult].
-            require(function.signature.ret_types.len() >= 3)
-                .ok_or(StarknetSierraCompilationError::InvalidEntryPointSignatureMissingArgs)?;
+            if function.signature.ret_types.len() < 3 {
+                return Err(StarknetSierraCompilationError::InvalidEntryPointSignatureMissingArgs);
+            }
 
             let (input_span, input_builtins) = function.signature.param_types.split_last().unwrap();
 
             let type_resolver = TypeResolver {
                 type_decl: &program.type_declarations,
             };
-            require(type_resolver.is_felt252_span(input_span))
-                .ok_or(StarknetSierraCompilationError::InvalidEntryPointSignature)?;
+            if !type_resolver.is_felt252_span(input_span) {
+                return Err(StarknetSierraCompilationError::InvalidEntryPointSignature);
+            }
 
             let (panic_result, output_builtins) =
                 function.signature.ret_types.split_last().unwrap();
 
-            require(input_builtins == output_builtins)
-                .ok_or(StarknetSierraCompilationError::InvalidEntryPointSignature)?;
-            require(type_resolver.is_valid_entry_point_return_type(panic_result))
-                .ok_or(StarknetSierraCompilationError::InvalidEntryPointSignature)?;
+            if input_builtins != output_builtins {
+                return Err(StarknetSierraCompilationError::InvalidEntryPointSignature);
+            }
+            if !type_resolver.is_valid_entry_point_return_type(panic_result) {
+                return Err(StarknetSierraCompilationError::InvalidEntryPointSignature);
+            }
 
             for type_id in input_builtins.iter() {
                 if !builtin_types.contains(type_resolver.get_generic_id(type_id)) {
@@ -543,7 +545,7 @@ impl CasmContractClass {
                 .sierra_statement_info
                 .get(statement_id.0)
                 .ok_or(StarknetSierraCompilationError::EntryPointError)?
-                .start_offset;
+                .code_offset;
             assert_eq!(
                 metadata.gas_info.function_costs[&function.id],
                 OrderedHashMap::from_iter([(CostTokenType::Const, ENTRY_POINT_COST as i64)]),

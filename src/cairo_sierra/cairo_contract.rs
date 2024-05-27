@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::cairo_sierra::cairo_contract_helper::starknet_compile;
 use cairo_lang_compiler::diagnostics::DiagnosticsReporter;
 use cairo_lang_compiler::CompilerConfig;
-use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
+use cairo_lang_starknet::allowed_libfuncs::ListSelector;
 
 use super::compile::FullProgram;
 

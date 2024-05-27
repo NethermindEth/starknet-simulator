@@ -6,7 +6,7 @@ use cairo_lang_compiler::project::setup_project;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_defs::ids::TopLevelLanguageElementId;
 use cairo_lang_filesystem::ids::CrateId;
-use cairo_lang_starknet_classes::allowed_libfuncs::ListSelector;
+use cairo_lang_starknet::allowed_libfuncs::{validate_compatible_sierra_version, ListSelector};
 use itertools::Itertools;
 
 use crate::cairo_sierra::compile::{compile_prepared_db, FullProgram};
@@ -87,14 +87,14 @@ pub fn starknet_compile(
         },
     )?;
 
-    full_program
-        .sierra_contract_class
-        .validate_version_compatible(
-            if let Some(allowed_libfuncs_list) = allowed_libfuncs_list {
-                allowed_libfuncs_list
-            } else {
-                ListSelector::default()
-            },
-        )?;
+    validate_compatible_sierra_version(
+        &full_program.sierra_contract_class,
+        if let Some(allowed_libfuncs_list) = allowed_libfuncs_list {
+            allowed_libfuncs_list
+        } else {
+            ListSelector::default()
+        },
+    )?;
+
     Ok(full_program)
 }
