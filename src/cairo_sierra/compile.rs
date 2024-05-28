@@ -6,27 +6,33 @@ use cairo_felt::Felt252;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_diagnostics::ToOption;
-use cairo_lang_lowering::db::LoweringGroup;
-use cairo_lang_lowering::ids::ConcreteFunctionWithBodyId;
-use cairo_lang_sierra::debug_info::Annotations;
+use cairo_lang_lowering::{db::LoweringGroup, ids::ConcreteFunctionWithBodyId};
 use cairo_lang_sierra::ids::FunctionId;
-use cairo_lang_sierra_generator::canonical_id_replacer::CanonicalReplacer;
-use cairo_lang_sierra_generator::db::SierraGenGroup;
-use cairo_lang_sierra_generator::replace_ids::{replace_sierra_ids_in_program, SierraIdReplacer};
-use cairo_lang_starknet::contract::starknet_keccak;
-use cairo_lang_starknet::contract_class::{ContractClass, ContractEntryPoint, ContractEntryPoints};
-use cairo_lang_utils::Intern;
+use cairo_lang_sierra_generator::{
+    canonical_id_replacer::CanonicalReplacer,
+    db::SierraGenGroup,
+    replace_ids::{replace_sierra_ids_in_program, SierraIdReplacer},
+};
+use cairo_lang_starknet::{
+    compiler_version,
+    contract::starknet_keccak,
+    contract_class::{ContractClass, ContractEntryPoint, ContractEntryPoints},
+};
 use itertools::{chain, Itertools};
 
 use crate::cairo_sierra::aliased::Aliased;
 use crate::cairo_sierra::cairo_helper::{
-    generate_sierra_to_cairo_statement_info, get_diagnostic_locations,
+    generate_sierra_to_cairo_statement_info, get_diagnostic_locations, SierraProgramWithDebug,
 };
+use crate::casm_sierra::felt252_serde::sierra_to_felt252s;
+
 use cairo_lang_starknet::abi::AbiBuilder;
 use cairo_lang_starknet::contract::{get_contract_abi_functions, ContractDeclaration};
 use cairo_lang_starknet::plugin::consts::{CONSTRUCTOR_MODULE, EXTERNAL_MODULE, L1_HANDLER_MODULE};
 
 use super::cairo_helper::SierraCairoInfoMapping;
+
+const DEFAULT_CONTRACT_CLASS_VERSION: &str = "0.1.0";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FullProgram {
@@ -83,22 +89,21 @@ fn compile_contract_with_prepared_and_checked_db(
         .to_option()
         .with_context(|| "Compilation failed without any diagnostics.")?;
 
-    let ProgramArtifact {
+    let SierraProgramWithDebug {
         program: mut sierra_program,
-        debug_info,
+        statement_locations,
     } = Arc::try_unwrap(program_arc)
         .map_err(|_| anyhow::anyhow!("Failed to unwrap Arc for program."))
         .and_then(|program| {
             Arc::try_unwrap(debug_info_arc)
                 .map_err(|_| anyhow::anyhow!("Failed to unwrap Arc for debug info."))
-                .map(|debug_info| SierraProgramWithDebug {
+                .map(|statement_locations| SierraProgramWithDebug {
                     program,
-                    debug_info,
+                    statement_locations,
                 })
         })?;
 
-    let statement_locations = debug_info.clone().statements_locations;
-    let statements_functions_map = statement_locations.get_statements_functions_map_for_tests(db);
+    let statements_functions_map = statement_locations.get_statements_functions_map(db);
 
     let diagnostic_locations = get_diagnostic_locations(db, statement_locations);
 
@@ -123,27 +128,25 @@ fn compile_contract_with_prepared_and_checked_db(
         constructor: get_entry_points(db, &constructor, &replacer)?,
     };
 
-    let annotations = if compiler_config.add_statements_functions {
-        let statements_functions = debug_info
-            .statements_locations
-            .extract_statements_functions(db);
-        Annotations::from(statements_functions)
-    } else {
-        Default::default()
-    };
-
-    let sierra_contract_class = ContractClass::new(
-        &sierra_program,
+    let sierra_contract_class = ContractClass {
+        sierra_program: sierra_to_felt252s(
+            compiler_version::current_sierra_version_id(),
+            compiler_version::current_compiler_version_id(),
+            &sierra_program,
+        )?,
+        sierra_program_debug_info: Some(cairo_lang_sierra::debug_info::DebugInfo::extract(
+            &sierra_program,
+        )),
+        contract_class_version: DEFAULT_CONTRACT_CLASS_VERSION.to_string(),
         entry_points_by_type,
-        Some(
+        abi: Some(
             AbiBuilder::from_submodule(db, contract.submodule_id, Default::default())
                 .ok()
                 .with_context(|| "Unexpected error while generating ABI.")?
                 .finalize()
                 .with_context(|| "Could not create ABI from contract submodule")?,
         ),
-        annotations,
-    )?;
+    };
     sierra_contract_class.sanity_check();
 
     Ok(FullProgram {
@@ -222,14 +225,14 @@ fn get_entry_points(
 /// Returns the selector and the sierra function id.
 pub fn get_selector_and_sierra_function<T: SierraIdReplacer>(
     db: &dyn SierraGenGroup,
-    function_with_body: &Aliased<ConcreteFunctionWithBodyId>,
+    function_with_body: &Aliased<cairo_lang_lowering::ids::ConcreteFunctionWithBodyId>,
     replacer: &T,
 ) -> (Felt252, FunctionId) {
     let function_id = function_with_body
         .value
         .function_id(db.upcast())
         .expect("Function error.");
-    let sierra_id = replacer.replace_function_id(&function_id.intern(db));
-    let selector: Felt252 = starknet_keccak(function_with_body.alias.as_bytes()).into();
+    let sierra_id = replacer.replace_function_id(&db.intern_sierra_function(function_id));
+    let selector = starknet_keccak(function_with_body.alias.as_bytes()).into();
     (selector, sierra_id)
 }

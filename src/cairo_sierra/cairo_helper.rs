@@ -15,11 +15,9 @@ use cairo_lang_filesystem::{
     ids::{CrateId, FileLongId},
 };
 use cairo_lang_sierra::program::{Program, StatementIdx};
-use cairo_lang_sierra_generator::{
-    db::SierraGenGroup, program_generator::SierraProgramWithDebug,
-    replace_ids::replace_sierra_ids_in_program, statements_locations::StatementsLocations,
-};
-use cairo_lang_utils::{unordered_hash_map::UnorderedHashMap, LookupIntern};
+use cairo_lang_sierra_generator::statements_locations::StatementsLocations;
+use cairo_lang_sierra_generator::{db::SierraGenGroup, replace_ids::replace_sierra_ids_in_program};
+use cairo_lang_utils::unordered_hash_map::UnorderedHashMap;
 
 use cairo_lang_compiler::{
     db::RootDatabase,
@@ -130,9 +128,8 @@ pub fn compile_prepared_db_program(
 ) -> Result<FullProgram> {
     match compile_prepared_db(db, main_crate_ids, compiler_config) {
         Ok(sierra_program_with_debug) => {
-            let statement_locations = sierra_program_with_debug.debug_info.statements_locations;
-            let statements_functions_map =
-                statement_locations.get_statements_functions_map_for_tests(db);
+            let statement_locations = sierra_program_with_debug.statement_locations;
+            let statements_functions_map = statement_locations.get_statements_functions_map(db);
 
             let diagnostic_locations = get_diagnostic_locations(db, statement_locations);
 
@@ -163,11 +160,9 @@ pub fn get_diagnostic_locations(
     statement_locations
         .locations
         .iter_sorted()
-        .flat_map(|(statement_idx, locations)| {
-            locations
-                .iter()
-                .map(|location| (*statement_idx, location.diagnostic_location(db)))
-        })
+        .map(|(statement_idx, location)| (*statement_idx, location.diagnostic_location(db)))
+        .collect::<Vec<_>>()
+        .into_iter()
         .fold(
             IndexMap::new(),
             |mut acc, (statement_idx, diagnostic_location)| {
@@ -182,6 +177,11 @@ pub fn get_diagnostic_locations(
 pub struct SierraCairoStatement {
     pub contract_code: String,
     pub sierra_cairo_statement_info: SierraCairoInfoMapping,
+}
+
+pub struct SierraProgramWithDebug {
+    pub program: Program,
+    pub statement_locations: StatementsLocations,
 }
 
 // Generates mapping information between Sierra and Cairo statements
@@ -225,7 +225,7 @@ pub fn generate_sierra_to_cairo_statement_info(
                     let file_id = location.file_id;
                     let file_name = file_id.file_name(db);
                     if contract_content.is_empty() && file_name == "contract" {
-                        match file_id.lookup_intern(db) {
+                        match db.lookup_intern_file(file_id) {
                             FileLongId::Virtual(vf) => {
                                 contract_content = vf.content.to_string();
                             }
@@ -298,16 +298,22 @@ pub fn compile_prepared_db(
 ) -> Result<SierraProgramWithDebug> {
     compiler_config.diagnostics_reporter.ensure(db)?;
 
-    let mut sierra_program_with_debug = Arc::unwrap_or_clone(
-        db.get_sierra_program(main_crate_ids)
-            .to_option()
-            .context("Compilation failed without any diagnostics")?,
-    );
+    let arc_result = db
+        .get_sierra_program(main_crate_ids)
+        .to_option()
+        .context("Compilation failed without any diagnostics")?;
+
+    let (program_arc, statements_locations_arc) = arc_result;
+
+    let mut program = Arc::try_unwrap(program_arc).unwrap_or_else(|arc| (*arc).clone());
+    let statements_locations =
+        Arc::try_unwrap(statements_locations_arc).unwrap_or_else(|arc| (*arc).clone());
 
     if compiler_config.replace_ids {
-        sierra_program_with_debug.program =
-            replace_sierra_ids_in_program(db, &sierra_program_with_debug.program);
+        program = replace_sierra_ids_in_program(db, &program).into();
     }
-
-    Ok(sierra_program_with_debug)
+    Ok(SierraProgramWithDebug {
+        program,
+        statement_locations: statements_locations,
+    })
 }
