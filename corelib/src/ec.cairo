@@ -50,19 +50,10 @@ impl EcPointTryIntoNonZero of TryInto<EcPoint, NonZeroEcPoint> {
 }
 
 // EC state.
+
+// TODO(lior): Allow explicit clone() for EcState, since we don't allow implicit dup (Copy).
 #[derive(Drop)]
 pub extern type EcState;
-
-mod internal {
-    impl EcStateCopy of Copy<super::EcState>;
-    pub impl EcStateClone of Clone<super::EcState> {
-        #[inline(always)]
-        fn clone(self: @super::EcState) -> super::EcState {
-            *self
-        }
-    }
-}
-impl EcStateClone = internal::EcStateClone;
 
 /// Initializes an EC computation with the zero point.
 extern fn ec_state_init() -> EcState nopanic;
@@ -81,32 +72,23 @@ extern fn ec_state_try_finalize_nz(s: EcState) -> Option<NonZeroEcPoint> nopanic
 pub impl EcStateImpl of EcStateTrait {
     /// Initializes an EC computation with the zero point.
     #[must_use]
-    fn init() -> EcState nopanic {
+    fn init() -> EcState {
         ec_state_init()
     }
     /// Adds a point to the computation.
     #[inline(always)]
-    fn add(ref self: EcState, p: NonZeroEcPoint) nopanic {
+    fn add(ref self: EcState, p: NonZeroEcPoint) {
         ec_state_add(ref self, :p);
-    }
-    /// Subs a point to the computation.
-    #[inline(always)]
-    fn sub(ref self: EcState, p: NonZeroEcPoint) {
-        // TODO(orizi): Have a `ec_neg` for NonZeroEcPoint as well, or a `ec_state_sub`.
-        let p: EcPoint = p.into();
-        let p_neg = ec_neg(p);
-        let p_neg_nz = p_neg.try_into().unwrap();
-        ec_state_add(ref self, p_neg_nz);
     }
     /// Adds the product p * scalar to the state.
     #[inline(always)]
-    fn add_mul(ref self: EcState, scalar: felt252, p: NonZeroEcPoint) nopanic {
+    fn add_mul(ref self: EcState, scalar: felt252, p: NonZeroEcPoint) {
         ec_state_add_mul(ref self, :scalar, :p);
     }
     /// Finalizes the EC computation and returns the result (returns `None` if the result is the
     /// zero point).
     #[inline(always)]
-    fn finalize_nz(self: EcState) -> Option<NonZeroEcPoint> nopanic {
+    fn finalize_nz(self: EcState) -> Option<NonZeroEcPoint> {
         ec_state_try_finalize_nz(self)
     }
     /// Finalizes the EC computation and returns the result.
@@ -124,36 +106,17 @@ pub impl EcPointImpl of EcPointTrait {
     /// Creates a new EC point from its (x, y) coordinates.
     #[inline(always)]
     fn new(x: felt252, y: felt252) -> Option<EcPoint> {
-        Option::Some(Self::new_nz(:x, :y)?.into())
-    }
-    /// Creates a new NonZero EC point from its (x, y) coordinates.
-    #[inline(always)]
-    fn new_nz(x: felt252, y: felt252) -> Option<NonZeroEcPoint> {
-        ec_point_try_new_nz(:x, :y)
+        Option::Some(ec_point_try_new_nz(:x, :y)?.into())
     }
     /// Creates a new EC point from its x coordinate.
     #[inline(always)]
     fn new_from_x(x: felt252) -> Option<EcPoint> {
-        Option::Some(Self::new_nz_from_x(:x)?.into())
-    }
-    /// Creates a new NonZero EC point from its x coordinate.
-    #[inline(always)]
-    fn new_nz_from_x(x: felt252) -> Option<NonZeroEcPoint> {
-        ec_point_from_x_nz(:x)
+        Option::Some(ec_point_from_x_nz(:x)?.into())
     }
     /// Returns the coordinates of the EC point.
+    #[inline(always)]
     fn coordinates(self: NonZeroEcPoint) -> (felt252, felt252) {
         ec_point_unwrap(self)
-    }
-    /// Returns the x coordinate of the EC point.
-    fn x(self: NonZeroEcPoint) -> felt252 {
-        let (x, _) = self.coordinates();
-        x
-    }
-    /// Returns the y coordinate of the EC point.
-    fn y(self: NonZeroEcPoint) -> felt252 {
-        let (_, y) = self.coordinates();
-        y
     }
     /// Computes the product of an EC point `p` by the given scalar `scalar`.
     fn mul(self: EcPoint, scalar: felt252) -> EcPoint {
@@ -204,10 +167,13 @@ impl EcPointSub of Sub<EcPoint> {
     /// Computes the difference between two points on the curve.
     fn sub(lhs: EcPoint, rhs: EcPoint) -> EcPoint {
         let nz_point: Option<NonZero<EcPoint>> = rhs.try_into();
-        if nz_point.is_none() {
-            // lhs - 0 = lhs.
-            return lhs;
-        }
+        match nz_point {
+            Option::Some(_) => {},
+            Option::None => {
+                // lhs - 0 = lhs.
+                return lhs;
+            },
+        };
         // lhs - rhs = lhs + (-rhs).
         lhs + (-rhs)
     }
