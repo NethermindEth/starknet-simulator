@@ -18,6 +18,12 @@ pub fn compile(code: &str, file_name: &str) -> Result<CompilationResult> {
     // Create a temporary directory
     let dir = tempdir()?;
 
+    let file_name = if file_name.ends_with(".cairo") {
+        file_name.replace(".cairo", "")
+    } else {
+        file_name.to_string()
+    };
+
     let cairo_file_path = dir.path().join(format!("{}.cairo", file_name));
 
     // Create and write to the file
