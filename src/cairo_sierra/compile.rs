@@ -36,6 +36,7 @@ const DEFAULT_CONTRACT_CLASS_VERSION: &str = "0.1.0";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FullProgram {
+    pub contract: String,
     pub sierra_contract_class: ContractClass,
     pub sierra_cairo_info_mapping: SierraCairoInfoMapping,
 }
@@ -105,14 +106,15 @@ fn compile_contract_with_prepared_and_checked_db(
     let diagnostic_locations =
         get_diagnostic_locations(db, sierra_program_with_debug.statement_locations);
 
-    let sierra_cairo_info_mapping = generate_sierra_to_cairo_statement_info(
+    let sierra_cairo_info_mapping_code = generate_sierra_to_cairo_statement_info(
         db,
-        sierra_program_with_debug.program.statements.len() as usize,
+        sierra_program.statements.len() as usize,
         statements_functions_map,
         diagnostic_locations,
     );
-
-    let sierra_cairo_statement_info = sierra_cairo_info_mapping?.sierra_cairo_statement_info;
+    let sierra_cairo_info_mapping = sierra_cairo_info_mapping_code?;
+    let sierra_cairo_statement_info = sierra_cairo_info_mapping.sierra_cairo_statement_info;
+    let contract_code = sierra_cairo_info_mapping.contract_code;
 
     if compiler_config.replace_ids {
         sierra_program = replace_sierra_ids_in_program(db, &sierra_program);
@@ -150,6 +152,7 @@ fn compile_contract_with_prepared_and_checked_db(
     sierra_contract_class.sanity_check();
 
     Ok(FullProgram {
+        contract: contract_code,
         sierra_contract_class,
         sierra_cairo_info_mapping: sierra_cairo_statement_info,
     })
