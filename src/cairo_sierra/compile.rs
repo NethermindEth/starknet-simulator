@@ -48,7 +48,7 @@ pub struct FullProgram {
 ///   `db`.
 /// * `compiler_config` - The compiler configuration.
 /// # Returns
-/// * `Ok(Vec<ContractClass>)` - List of all compiled contract classes found in main cairo_lang_starknets.
+/// * `Ok(Vec<ContractClass>)` - List of all compiled contract classes found in main crates.
 /// * `Err(anyhow::Error)` - Compilation failed.
 pub fn compile_prepared_db(
     db: &RootDatabase,
@@ -80,7 +80,8 @@ fn compile_contract_with_prepared_and_checked_db(
         l1_handler,
         constructor,
     } = extract_semantic_entrypoints(db, contract)?;
-    let (program_arc, debug_info_arc) = db
+
+    let (program_arc, statement_locations_arc) = db
         .get_sierra_program_for_functions(
             chain!(&external, &l1_handler, &constructor)
                 .map(|f| f.value)
@@ -89,42 +90,40 @@ fn compile_contract_with_prepared_and_checked_db(
         .to_option()
         .with_context(|| "Compilation failed without any diagnostics.")?;
 
-    let SierraProgramWithDebug {
-        program: mut sierra_program,
+    let mut sierra_program = Arc::unwrap_or_clone(program_arc);
+    let statement_locations = Arc::unwrap_or_clone(statement_locations_arc);
+
+    let sierra_program_with_debug = SierraProgramWithDebug {
+        program: sierra_program.clone(),
         statement_locations,
-    } = Arc::try_unwrap(program_arc)
-        .map_err(|_| anyhow::anyhow!("Failed to unwrap Arc for program."))
-        .and_then(|program| {
-            Arc::try_unwrap(debug_info_arc)
-                .map_err(|_| anyhow::anyhow!("Failed to unwrap Arc for debug info."))
-                .map(|statement_locations| SierraProgramWithDebug {
-                    program,
-                    statement_locations,
-                })
-        })?;
+    };
 
-    let statements_functions_map = statement_locations.get_statements_functions_map(db);
+    let statements_functions_map = sierra_program_with_debug
+        .statement_locations
+        .get_statements_functions_map(db);
 
-    let diagnostic_locations = get_diagnostic_locations(db, statement_locations);
+    let diagnostic_locations =
+        get_diagnostic_locations(db, sierra_program_with_debug.statement_locations);
 
     let sierra_cairo_info_mapping = generate_sierra_to_cairo_statement_info(
         db,
-        sierra_program.statements.len() as usize,
+        sierra_program_with_debug.program.statements.len() as usize,
         statements_functions_map,
         diagnostic_locations,
     );
+
     let sierra_cairo_statement_info = sierra_cairo_info_mapping?.sierra_cairo_statement_info;
 
     if compiler_config.replace_ids {
         sierra_program = replace_sierra_ids_in_program(db, &sierra_program);
     }
     let replacer = CanonicalReplacer::from_program(&sierra_program);
+
     let sierra_program = replacer.apply(&sierra_program);
 
     let entry_points_by_type = ContractEntryPoints {
         external: get_entry_points(db, &external, &replacer)?,
         l1_handler: get_entry_points(db, &l1_handler, &replacer)?,
-        // Later generation of ABI verifies that there is up to one constructor.
         constructor: get_entry_points(db, &constructor, &replacer)?,
     };
 
@@ -147,6 +146,7 @@ fn compile_contract_with_prepared_and_checked_db(
                 .with_context(|| "Could not create ABI from contract submodule")?,
         ),
     };
+
     sierra_contract_class.sanity_check();
 
     Ok(FullProgram {

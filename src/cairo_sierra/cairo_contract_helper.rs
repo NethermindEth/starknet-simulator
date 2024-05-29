@@ -1,10 +1,12 @@
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use anyhow::Result;
 use cairo_lang_compiler::db::RootDatabase;
 use cairo_lang_compiler::project::setup_project;
 use cairo_lang_compiler::CompilerConfig;
 use cairo_lang_defs::ids::TopLevelLanguageElementId;
+use cairo_lang_diagnostics::ToOption;
 use cairo_lang_filesystem::ids::CrateId;
 use cairo_lang_starknet::allowed_libfuncs::{validate_compatible_sierra_version, ListSelector};
 use itertools::Itertools;
@@ -41,6 +43,7 @@ pub fn compile_contract_in_prepared_db(
 ) -> Result<FullProgram> {
     let mut contracts = find_contracts(db, &main_crate_ids);
 
+    // TODO(ilya): Add contract names.
     if let Some(contract_path) = contract_path {
         contracts.retain(|contract| contract.submodule_id.full_path(db) == contract_path);
     };
