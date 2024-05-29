@@ -268,7 +268,8 @@ pub fn generate_sierra_to_cairo_statement_info(
                 }
             }
         }
-        
+    }
+
     Ok(SierraCairoStatement {
         contract_code: contract_content,
         sierra_cairo_statement_info: sierra_cairo_info_mapping,
