@@ -18,7 +18,11 @@ pub fn compile_contract(code: &str, file_name: &str) -> Result<ContractCompilati
     // Create a temporary directory
     let dir = tempdir()?;
 
-    let cairo_file_path = dir.path().join(format!("{}.cairo", file_name));
+    let cairo_file_path = if file_name.ends_with(".cairo") {
+        dir.path().join(file_name)
+    } else {
+        dir.path().join(format!("{}.cairo", file_name))
+    };
 
     // Create and write to the file
     let mut cairo_temp_file = NamedTempFile::new_in(dir.path())?;
